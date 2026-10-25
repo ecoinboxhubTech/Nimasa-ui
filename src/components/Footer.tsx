@@ -1,10 +1,21 @@
 import { Link } from 'react-router-dom';
 import { TILE_ATTRIBUTION } from '../config';
 
-export default function Footer() {
+export default function Footer({ compact = false }: { compact?: boolean }) {
+  if (compact) {
+    return (
+      <footer className="footer footer-compact">
+        <p>
+          BlueIntel is an informational tool, <strong>not</strong> an official forecast, warning or navigation aid. All values are synthetic sample data.
+          <span className="attrib" dangerouslySetInnerHTML={{ __html: ` Map: ${TILE_ATTRIBUTION}` }} />
+        </p>
+        <Link to="/about">About &amp; limits</Link>
+      </footer>
+    );
+  }
   return (
     <footer className="footer">
-      <div className="container footer-grid">
+      <div className="footer-grid">
         <div>
           <strong className="footer-title">BlueIntel Nigeria</strong>
           <p>
@@ -16,16 +27,18 @@ export default function Footer() {
         <div>
           <strong className="footer-title">Explore</strong>
           <ul>
-            <li><Link to="/">Dashboard</Link></li>
+            <li><Link to="/dashboard">Dashboard</Link></li>
             <li><Link to="/alerts">Alerts</Link></li>
-            <li><Link to="/sources">Data sources & licences</Link></li>
-            <li><Link to="/about">About & limits</Link></li>
+            <li><Link to="/sources">Data sources &amp; licences</Link></li>
+            <li><Link to="/about">About &amp; limits</Link></li>
+            <li><Link to="/feedback">Pilot feedback</Link></li>
           </ul>
         </div>
         <div>
           <strong className="footer-title">Demo build</strong>
           <p>All values are synthetic sample data for design review. No real measurements are shown.</p>
           <p className="attrib" dangerouslySetInnerHTML={{ __html: `Map: ${TILE_ATTRIBUTION}` }} />
+          <p><Link to="/admin/login">Staff login</Link></p>
         </div>
       </div>
     </footer>

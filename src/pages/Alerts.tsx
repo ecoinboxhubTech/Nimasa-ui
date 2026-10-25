@@ -69,7 +69,7 @@ export default function Alerts() {
                   <div><dt>Issued</dt><dd>{formatDateTime(e.triggeredAt)}</dd></div>
                   <div><dt>Valid until</dt><dd><Clock size={12} aria-hidden /> {formatDateTime(e.validUntil)}</dd></div>
                 </dl>
-                <Link to="/#map" className="inline-link" onClick={() => setLocationId(e.locationId)}>View location on map</Link>
+                <Link to="/dashboard#map" className="inline-link" onClick={() => setLocationId(e.locationId)}>View location on map</Link>
               </div>
             </li>
           ))}

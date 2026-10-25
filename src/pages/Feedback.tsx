@@ -35,9 +35,7 @@ export default function Feedback() {
         <label className="field">What would make this more useful?
           <textarea rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} />
         </label>
-        <button className="btn btn-primary" type="submit">Send feedback</button>
-        <p className="muted">Demo form. A production version would POST to <code>/api/v1/feedback</code> with data minimisation and a privacy notice.</p>
-      </form>
+        <button className="btn btn-primary" type="submit">Send feedback</button>      </form>
     </div>
   );
 }

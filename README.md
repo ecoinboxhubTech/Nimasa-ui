@@ -54,7 +54,7 @@ Deploying `dist/` to static hosting: configure an SPA fallback so deep links lik
 ```
 src/
   api/mockApi.ts        demo data layer (replace with real API client)
-  components/           Header, AlertTicker, MapView, TrendChart, badges, states
+  components/           Sidebar, Topbar, AlertTicker, MapView, TrendChart, badges, states
   context/              DataContext (fetch, freshness, alerts), AuthContext (demo)
   lib/                  time, freshness, alerts, csv
   pages/                Home, Alerts, Sources, Admin, About, Insights, Feedback

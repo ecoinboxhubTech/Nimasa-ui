@@ -151,7 +151,7 @@ export const ALERT_RULES: AlertRule[] = [
   },
 ];
 
-export const RAMP_COLOURS = ['#4cc9c0', '#2aa6b8', '#2f7fc1', '#6a5acd', '#c2185b'];
+export const RAMP_COLOURS = ['#76f3ea', '#2aa6b8', '#0f6cbd', '#6a5acd', '#c2185b'];
 
 export const getDataset = (key: string) => DATASETS.find((d) => d.key === key)!;
 export const getLocation = (id: string) => LOCATIONS.find((l) => l.id === id)!;

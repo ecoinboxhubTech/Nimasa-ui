@@ -6,15 +6,6 @@ const PRINCIPLES = [
   ['Responsible data use', 'Respect source licences, terms, privacy and attribution requirements.'],
   ['Evidence-led AI', 'AI summaries must be grounded in available data and separate fact from interpretation.'],
 ];
-const ROADMAP = [
-  ['Phase 0: Discovery', 'Interview users, pick one persona and coastal area, verify datasets, licences and cadence.'],
-  ['Phase 1: Foundation', 'Repository, React app, FastAPI service, database, basic map and deployment pipeline.'],
-  ['Phase 2: Data MVP', 'One or two ingestion adapters, validation, metadata, map layer and charts.'],
-  ['Phase 3: Alerts & reliability', 'One alert rule, duplicate suppression, stale-data handling, logs and monitoring.'],
-  ['Phase 4: Pilot', 'User tests, feedback, task outcomes and UX revisions.'],
-  ['Phase 5: Expansion decision', 'Evaluate AI summaries, accounts, more sources and a revenue model.'],
-];
-
 export default function About() {
   return (
     <div className="container section page">
@@ -33,21 +24,6 @@ export default function About() {
 
       <h2>Product principles</h2>
       <div className="trust-grid">{PRINCIPLES.map(([t, b]) => <div className="trust" key={t}><h3>{t}</h3><p>{b}</p></div>)}</div>
-
-      <h2>Release scope</h2>
-      <div className="table-scroll">
-        <table>
-          <thead><tr><th>Release</th><th>Included</th><th>Deferred / conditional</th></tr></thead>
-          <tbody>
-            <tr><td>MVP</td><td>Map, data-source metadata, charts, basic alert, responsive UI, freshness/error states, pilot feedback.</td><td>AI chat, complex user roles, payments, custom sensors, advanced forecasting.</td></tr>
-            <tr><td>Release 1.1</td><td>Saved locations, accounts if needed, alert preferences, improved export and usability.</td><td>Only after user feedback and security review.</td></tr>
-            <tr><td>Later</td><td>AI-assisted Q&amp;A, more data integrations, organisation dashboards, API access, subscriptions.</td><td>Requires validated demand, source permissions, budget and model evaluation.</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h2>Delivery roadmap</h2>
-      <ol className="roadmap">{ROADMAP.map(([t, b]) => <li key={t}><strong>{t}</strong><span>{b}</span></li>)}</ol>
 
       <h2>Privacy</h2>
       <p>

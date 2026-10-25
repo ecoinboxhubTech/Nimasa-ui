@@ -28,7 +28,7 @@ export default function MapView({ ds }: { ds: DatasetMeta }) {
   return (
     <MapContainer center={MAP_CENTER} zoom={MAP_ZOOM} minZoom={8} maxZoom={13} scrollWheelZoom={false} className="map" aria-label="Map of the Lagos coastal coverage area">
       <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
-      <Rectangle bounds={COVERAGE_BOUNDS} pathOptions={{ color: '#0a7c86', weight: 1.5, dashArray: '6 6', fillOpacity: 0.04 }}>
+      <Rectangle bounds={COVERAGE_BOUNDS} pathOptions={{ color: '#0f6cbd', weight: 1.5, dashArray: '6 6', fillOpacity: 0.04 }}>
         <Tooltip sticky>MVP coverage area. Only marked locations have data.</Tooltip>
       </Rectangle>
       {LOCATIONS.map((l) => {
@@ -42,7 +42,7 @@ export default function MapView({ ds }: { ds: DatasetMeta }) {
             key={l.id}
             center={[l.lat, l.lng]}
             radius={selected ? 15 : 11}
-            pathOptions={{ color: selected ? '#072b45' : '#ffffff', weight: selected ? 3 : 2, fillColor: usable ? rampColour(p!.value as number, ds) : '#9aa7b2', fillOpacity: usable ? 0.92 : 0.7, dashArray: usable ? undefined : '3 3' }}
+            pathOptions={{ color: selected ? '#041d32' : '#ffffff', weight: selected ? 3 : 2, fillColor: usable ? rampColour(p!.value as number, ds) : '#9aa7b2', fillOpacity: usable ? 0.92 : 0.7, dashArray: usable ? undefined : '3 3' }}
             eventHandlers={{ click: () => setLocationId(l.id) }}
           >
             <Tooltip direction="top" offset={[0, -8]}>
