@@ -1,6 +1,6 @@
-# BlueIntel Nigeria (MVP front-end)
+# Orizon Nimasa (MVP front-end)
 
-React + TypeScript + Vite front-end built from the *BlueIntel Nigeria PRD & SRS v1.0*. The layout takes its cues from the NiMet weather site (utility bar, red alert ticker, forecast panel plus "latest values" panel).
+React + TypeScript + Vite front-end built from the *Orizon Nimasa PRD & SRS v1.0*. The layout takes its cues from the NiMet weather site (utility bar, red alert ticker, forecast panel plus "latest values" panel).
 
 > **All data in this build is synthetic.** `src/api/mockApi.ts` generates sample values so the interface, states and alert logic can be reviewed. No real source is connected or approved yet (see PRD §12, Appendix A).
 
@@ -38,7 +38,7 @@ Deploying `dist/` to static hosting: configure an SPA fallback so deep links lik
 ## Connecting real data
 
 1. Pick one approved source (licence, coverage and attribution reviewed) and build the ingestion adapter server-side.
-2. Replace `fetchBundle()` in `src/api/mockApi.ts` with calls to `GET /api/v1/locations/{id}/series`, `/summary`, `/alerts`, `/sources`.
+2. The app talks to the FastAPI service when `VITE_API_BASE_URL` is set (see `.env.example`): `src/api/client.ts` adapts the API to the UI. The API must list this front-end origin in its `CORS_ORIGINS` (restart the API after changing it). Alternatively set the variable to `/api/v1` and Vite proxies `/api` to `http://127.0.0.1:8015` (override with `VITE_API_PROXY`). Leave the variable empty to use the synthetic mock in `src/api/mockApi.ts`.
 3. Update `SOURCES`, `DATASETS`, `LOCATIONS` and `ALERT_RULES` in `src/config.ts`. Move alert evaluation to the server for production.
 4. Have the thresholds in `ALERT_RULES` reviewed by a marine/meteorological specialist. The current values are placeholders.
 

@@ -1,6 +1,6 @@
-import type { AlertRule, DatasetMeta, Location, SourceMeta, DataKind } from './types';
+import type { AlertCategory, AlertRule, DatasetMeta, Location, SourceMeta, DataKind } from './types';
 
-export const APP_NAME = 'BlueIntel Nigeria';
+export const APP_NAME = 'Orizon Nimasa';
 export const TIMEZONE = 'Africa/Lagos';
 export const TZ_LABEL = 'WAT';
 
@@ -36,14 +36,14 @@ export const KIND_HELP: Record<DataKind, string> = {
   observation: 'Measured value reported by a source.',
   forecast: 'Predicted future value. Uncertainty increases with lead time.',
   model_estimate: 'Value estimated by a numerical model, not measured at this exact spot.',
-  derived: 'Calculated by BlueIntel from other values using a documented rule.',
+  derived: 'Calculated by Orizon Nimasa from other values using a documented rule.',
 };
 
 export const SOURCES: SourceMeta[] = [
   {
     id: 'demo-sample',
-    name: 'BlueIntel sample generator',
-    provider: 'BlueIntel (internal, demo only)',
+    name: 'Orizon Nimasa sample generator',
+    provider: 'Orizon Nimasa (internal, demo only)',
     status: 'sample',
     licence: 'Not applicable: synthetic values, not real measurements',
     attribution: 'Generated sample data for interface demonstration',
@@ -127,6 +127,7 @@ export const DATASETS: DatasetMeta[] = [
 export const ALERT_RULES: AlertRule[] = [
   {
     id: 'wave-high',
+    category: 'weather',
     name: 'High wave height advisory',
     datasetKey: 'wave_height',
     operator: '>=',
@@ -139,6 +140,7 @@ export const ALERT_RULES: AlertRule[] = [
   },
   {
     id: 'wind-strong',
+    category: 'weather',
     name: 'Strong wind advisory',
     datasetKey: 'wind_speed',
     operator: '>=',
@@ -149,11 +151,70 @@ export const ALERT_RULES: AlertRule[] = [
     enabled: true,
     reviewStatus: 'Illustrative threshold. Domain review pending',
   },
+  {
+    id: 'nav-water-wave',
+    category: 'inland_navigation',
+    name: 'Water navigation caution: rough water for small craft',
+    datasetKey: 'wave_height',
+    operator: '>=',
+    threshold: 1.5,
+    unit: 'm',
+    suppressionHours: 6,
+    validityHours: 6,
+    enabled: true,
+    reviewStatus: 'Illustrative threshold. Domain review pending',
+  },
+  {
+    id: 'nav-water-wind',
+    category: 'inland_navigation',
+    name: 'Water navigation caution: strong wind on lagoons and creeks',
+    datasetKey: 'wind_speed',
+    operator: '>=',
+    threshold: 22,
+    unit: 'km/h',
+    suppressionHours: 3,
+    validityHours: 3,
+    enabled: true,
+    reviewStatus: 'Illustrative threshold. Domain review pending',
+  },
+  {
+    id: 'nav-ocean-wave',
+    category: 'ocean_navigation',
+    name: 'Ocean navigation advisory: heavy swell',
+    datasetKey: 'wave_height',
+    operator: '>=',
+    threshold: 2.5,
+    unit: 'm',
+    suppressionHours: 6,
+    validityHours: 6,
+    enabled: true,
+    reviewStatus: 'Illustrative threshold. Domain review pending',
+  },
+  {
+    id: 'nav-ocean-wind',
+    category: 'ocean_navigation',
+    name: 'Ocean navigation advisory: gale-force wind',
+    datasetKey: 'wind_speed',
+    operator: '>=',
+    threshold: 34,
+    unit: 'km/h',
+    suppressionHours: 3,
+    validityHours: 3,
+    enabled: true,
+    reviewStatus: 'Illustrative threshold. Domain review pending',
+  },
 ];
+
+export const ALERT_CATEGORY_LABEL: Record<AlertCategory, string> = {
+  weather: 'Weather & sea state',
+  inland_navigation: 'Water navigation',
+  ocean_navigation: 'Ocean navigation',
+};
 
 export const RAMP_COLOURS = ['#76f3ea', '#2aa6b8', '#0f6cbd', '#6a5acd', '#c2185b'];
 
 export const getDataset = (key: string) => DATASETS.find((d) => d.key === key)!;
 export const getLocation = (id: string) => LOCATIONS.find((l) => l.id === id)!;
-export const getSource = (id: string) => SOURCES.find((s) => s.id === id)!;
+export const getSource = (id: string): SourceMeta =>
+  SOURCES.find((s) => s.id === id) ?? { id, name: id, provider: id, status: 'candidate', licence: 'Not reviewed', attribution: 'To be confirmed', note: '' };
 export const seriesKey = (locationId: string, datasetKey: string) => `${locationId}:${datasetKey}`;

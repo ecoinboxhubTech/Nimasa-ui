@@ -6,6 +6,7 @@ import { ALERT_RULES, DATASETS, KIND_LABEL, LOCATIONS, getDataset, getLocation, 
 import { latestValid, ageMinutes } from '../lib/freshness';
 import { dayKey, formatDateTime, formatDayLabel, formatDayMonth, timeAgo } from '../lib/time';
 import { buildCsv, downloadText } from '../lib/csv';
+import { exportChart, type ExportFormat } from '../lib/export';
 import { FreshBadge, KindBadge } from '../components/Badges';
 import { EmptyState, ErrorState, Loading } from '../components/States';
 import MapView, { MapLegend } from '../components/MapView';
@@ -65,6 +66,7 @@ export default function Home() {
   const rule = ALERT_RULES.find((r) => r.datasetKey === chartKey);
   const locEvents = activeEvents.filter((e) => e.locationId === locationId);
   const anyStale = DATASETS.some((x) => getFresh(locationId, x.key) === 'stale');
+  const anyEmpty = DATASETS.some((x) => getFresh(locationId, x.key) === 'empty');
   const obsStamp = Math.max(0, ...DATASETS.map((x) => getSeries(locationId, x.key)?.sourceTimestamp ?? 0));
 
   // Rule-based plain-language summary (derived, not AI).
@@ -107,13 +109,29 @@ export default function Home() {
                 <button key={r.key} className={range === r.key ? 'on' : ''} aria-pressed={range === r.key} onClick={() => setRange(r.key)}>{r.label}</button>
               ))}
             </div>
-            <button
-              className="btn"
-              disabled={!chartSeries}
-              onClick={() => chartSeries && downloadText(`blueintel_${locationId}_${chartKey}.csv`, buildCsv(chartPoints, chartDs, loc, getSource(chartDs.sourceId).name))}
-            >
-              <Download size={16} aria-hidden /> Export CSV
-            </button>
+            <label className="export-menu">
+              <Download size={16} aria-hidden />
+              <select
+                className="btn"
+                disabled={!chartSeries}
+                value=""
+                aria-label="Export chart data"
+                onChange={(e) => {
+                  const f = e.target.value;
+                  if (!chartSeries || !f) return;
+                  const base = `orizon-nimasa_${locationId}_${chartKey}`;
+                  const sourceName = getSource(chartDs.sourceId).name;
+                  if (f === 'csv') downloadText(`${base}.csv`, buildCsv(chartPoints, chartDs, loc, sourceName));
+                  else void exportChart(f as ExportFormat, { points: chartPoints, dataset: chartDs, location: loc, sourceName, now, threshold: rule ? { value: rule.threshold, label: `Advisory threshold ${rule.threshold} ${rule.unit} (illustrative)` } : undefined }, base);
+                }}
+              >
+                <option value="">Export…</option>
+                <option value="csv">CSV (data)</option>
+                <option value="pdf">PDF (chart report)</option>
+                <option value="png">PNG (chart image)</option>
+                <option value="jpg">JPG (chart image)</option>
+              </select>
+            </label>
           </div>
         </div>
 
@@ -139,9 +157,9 @@ export default function Home() {
             <div className="kpi-head">
               <span className="kpi-title"><span className="icon-badge"><Activity size={18} aria-hidden /></span> Advisories</span>
             </div>
-            <div className="kpi-value kpi-text">{anyStale ? 'Not assessed' : locEvents.length ? `${locEvents.length} active` : 'None active'}</div>
+            <div className="kpi-value kpi-text">{anyStale || anyEmpty ? 'Not assessed' : locEvents.length ? `${locEvents.length} active` : 'None active'}</div>
             <div className="bar" aria-hidden><i style={{ width: locEvents.length ? '100%' : '4%' }} /></div>
-            <div className="kpi-foot"><Link to="/alerts" className="inline-link">{anyStale ? 'Data stale: view alerts' : 'View alerts'}</Link></div>
+            <div className="kpi-foot"><Link to="/alerts" className="inline-link">{anyStale ? 'Data stale: view alerts' : anyEmpty ? 'No data yet: view alerts' : 'View alerts'}</Link></div>
           </div>
         </section>
 
@@ -270,7 +288,7 @@ export default function Home() {
                   <dd>
                     {(() => {
                       const mins = ageMinutes(getSeries(locationId, 'wave_height')?.sourceTimestamp ?? null, now);
-                      return <><strong>{anyStale ? 'Some data stale' : 'All up to date'}</strong><small>{mins != null ? `Wave feed age: ${mins} min` : 'No timestamp'}</small></>;
+                      return <><strong>{anyEmpty ? 'No data received' : anyStale ? 'Some data stale' : 'All up to date'}</strong><small>{mins != null ? `Wave feed age: ${mins} min` : 'No timestamp'}</small></>;
                     })()}
                   </dd>
                 </div>

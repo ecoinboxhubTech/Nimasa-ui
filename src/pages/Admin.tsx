@@ -1,3 +1,5 @@
+import { USE_API } from '../api/client';
+import AdminLive from './AdminLive';
 import { CheckCircle2, ShieldAlert, XCircle } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { ALERT_RULES, DATASETS, LOCATIONS, getSource, seriesKey } from '../config';
@@ -9,11 +11,11 @@ import type { FeedMode } from '../types';
 
 const AUDIT = [
   { at: '2026-10-12 09:14 WAT', who: 'admin (sample)', what: 'Created rule “High wave height advisory” (threshold 2.0 m)' },
-  { at: '2026-10-12 09:20 WAT', who: 'admin (sample)', what: 'Enabled source “BlueIntel sample generator”' },
+  { at: '2026-10-12 09:20 WAT', who: 'admin (sample)', what: 'Enabled source “Orizon Nimasa sample generator”' },
   { at: '2026-10-15 16:02 WAT', who: 'admin (sample)', what: 'Set wind freshness limit to 120 min' },
 ];
 
-export default function Admin() {
+function AdminMock() {
   const { status, bundle, now, mode, setMode, reload, getFresh, getSeries } = useData();
 
   const modes: { key: FeedMode; label: string; help: string }[] = [
@@ -113,4 +115,8 @@ export default function Admin() {
       <p><button className="btn" onClick={reload}>Reload data</button></p>
     </div>
   );
+}
+
+export default function Admin() {
+  return USE_API ? <AdminLive /> : <AdminMock />;
 }

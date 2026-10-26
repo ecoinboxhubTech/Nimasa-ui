@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Activity, ExternalLink, Gauge, HeartPulse, ListChecks, LogOut, Menu, ScrollText, SlidersHorizontal, X } from 'lucide-react';
 import { BrandMark } from '../components/Sidebar';
+import { USE_API } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 
@@ -36,14 +37,14 @@ export default function AdminLayout() {
           <Link to="/admin" className="brand" aria-label="Operations home">
             <BrandMark />
             <span className="brand-text">
-              <span className="brand-name">BlueIntel</span>
+              <span className="brand-name">Orizon Nimasa</span>
               <span className="brand-sub">Operations console</span>
             </span>
           </Link>
           <button className="icon-btn sidebar-close" onClick={() => setOpen(false)} aria-label="Close menu"><X size={18} /></button>
         </div>
         <nav className="side-nav" aria-label="Sections">
-          {SECTIONS.map(({ id, label, icon: Icon }) => (
+          {SECTIONS.filter((s) => !(USE_API && s.id === 'simulate')).map(({ id, label, icon: Icon }) => (
             <a key={id} href={`#${id}`} className="side-link" onClick={() => setOpen(false)}>
               <span className="side-link-main"><Icon size={20} aria-hidden /> {label}</span>
             </a>
@@ -62,7 +63,7 @@ export default function AdminLayout() {
           <button className="icon-btn menu-btn" onClick={() => setOpen(true)} aria-label="Open menu"><Menu size={20} /></button>
           <div className="topbar-title">
             <strong>Operations</strong>
-            <span className="label">Demo administrator · sample data</span>
+            <span className="label">{USE_API ? 'Signed in' : 'Demo administrator · sample data'}</span>
           </div>
           <span className="spacer" />
           <Link to="/dashboard" className="btn hide-sm-btn">Public dashboard</Link>

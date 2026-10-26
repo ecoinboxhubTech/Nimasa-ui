@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { AlertEvent, Bundle, Freshness, FeedMode, Series } from '../types';
 import { ALERT_RULES, DATASETS, DEFAULT_LOCATION_ID, LOCATIONS, seriesKey } from '../config';
 import { fetchBundle } from '../api/mockApi';
+import { USE_API, fetchLiveBundle } from '../api/client';
 import { getFreshness } from '../lib/freshness';
 import { evaluateRule } from '../lib/alerts';
 
@@ -41,7 +42,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     setStatus('loading');
-    fetchBundle(mode)
+    (USE_API ? fetchLiveBundle() : fetchBundle(mode))
       .then((b) => {
         if (cancelled) return;
         setBundle(b);
@@ -60,6 +61,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [mode, tick]);
 
   const reload = useCallback(() => setTick((t) => t + 1), []);
+
+  // Live data is ingested on a schedule, so poll gently instead of fetching on every view.
+  useEffect(() => {
+    if (!USE_API) return;
+    const id = setInterval(() => setTick((t) => t + 1), 5 * 60000);
+    return () => clearInterval(id);
+  }, []);
 
   const getSeries = useCallback((loc: string, ds: string) => bundle?.series[seriesKey(loc, ds)], [bundle]);
 
@@ -82,10 +90,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const s = bundle.series[seriesKey(l.id, d.key)];
           const f = getFreshness(s.sourceTimestamp, d.staleAfterMinutes, now);
           if (f === 'stale') stale.push(d.key);
-          for (const r of ALERT_RULES.filter((r) => r.datasetKey === d.key)) ev.push(...evaluateRule(r, s, f, now));
+          if (!bundle.alerts) for (const r of ALERT_RULES.filter((r) => r.datasetKey === d.key)) ev.push(...evaluateRule(r, s, f, now));
         }
       }
     }
+    if (bundle?.alerts) ev.push(...bundle.alerts);
     ev.sort((a, b) => b.triggeredAt - a.triggeredAt);
     return { events: ev, staleKeys: Array.from(new Set(stale)) };
   }, [bundle, now]);

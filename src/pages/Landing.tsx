@@ -32,7 +32,7 @@ export default function Landing() {
               <span className="grad">Trusted, labelled data.</span>
             </h1>
             <p className="lead">
-              BlueIntel Nigeria brings selected, legally accessible marine and weather data into one mobile-friendly dashboard, so you can see what a value is,
+              Orizon Nimasa brings selected, legally accessible marine and weather data into one mobile-friendly dashboard, so you can see what a value is,
               where it came from and how current it is.
             </p>
             <div className="hero-cta">
@@ -110,7 +110,7 @@ export default function Landing() {
       <section className="land-wrap land-section">
         <div className="notice notice-warn">
           <div>
-            <strong>What this tool is not.</strong> BlueIntel is an informational tool. It is not an official forecast, warning, navigation aid or emergency service, and it cannot guarantee
+            <strong>What this tool is not.</strong> Orizon Nimasa is an informational tool. It is not an official forecast, warning, navigation aid or emergency service, and it cannot guarantee
             safe travel or fishing outcomes. Follow guidance from official maritime and meteorological authorities.
           </div>
         </div>

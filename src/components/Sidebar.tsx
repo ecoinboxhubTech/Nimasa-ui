@@ -23,19 +23,20 @@ export function BrandMark({ size = 36 }: { size?: number }) {
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { activeEvents, staleKeys, status, locationId, getFresh } = useData();
   const stale = staleKeys.length > 0 || DATASETS.some((d) => getFresh(locationId, d.key) === 'stale');
+  const empty = DATASETS.some((d) => getFresh(locationId, d.key) === 'empty');
   const down = status === 'error';
-  const tone = down ? 'bad' : stale ? 'warn' : 'ok';
-  const linkText = down ? 'Data service unavailable' : stale ? 'Some feeds are stale' : 'All feeds up to date';
+  const tone = down ? 'bad' : stale || empty ? 'warn' : 'ok';
+  const linkText = down ? 'Data service unavailable' : empty ? 'No data received yet' : stale ? 'Some feeds are stale' : 'All feeds up to date';
 
   return (
     <>
       <div className={`scrim ${open ? 'show' : ''}`} onClick={onClose} aria-hidden="true" />
       <aside className={`sidebar ${open ? 'open' : ''}`} aria-label="Primary">
         <div className="sidebar-top">
-          <Link to="/dashboard" className="brand" aria-label="BlueIntel dashboard" onClick={onClose}>
+          <Link to="/dashboard" className="brand" aria-label="Orizon Nimasa dashboard" onClick={onClose}>
             <BrandMark />
             <span className="brand-text">
-              <span className="brand-name">BlueIntel</span>
+              <span className="brand-name">Orizon Nimasa</span>
               <span className="brand-sub">Nigeria · Ocean data</span>
             </span>
           </Link>

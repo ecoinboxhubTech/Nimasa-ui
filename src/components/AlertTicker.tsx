@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useData } from '../context/DataContext';
-import { DATASETS, getLocation } from '../config';
+import { ALERT_CATEGORY_LABEL, DATASETS, getLocation } from '../config';
 import { formatTime } from '../lib/time';
 
 export default function AlertTicker() {
-  const { activeEvents, staleKeys, status, error, bundle } = useData();
+  const { activeEvents, staleKeys, status, error, bundle, getFresh, locationId } = useData();
 
   const items = useMemo(() => {
     const out: string[] = [];
@@ -14,12 +14,14 @@ export default function AlertTicker() {
       out.push(`Data-quality warning: ${names} feed is stale. Alerts for stale data are suppressed.`);
     }
     for (const e of activeEvents) {
-      out.push(`${e.ruleName}, ${getLocation(e.locationId).name}: ${e.value} ${e.unit} (threshold ${e.threshold} ${e.unit}). Issued ${formatTime(e.triggeredAt)}, valid to ${formatTime(e.validUntil)}.`);
+      out.push(`${e.category && e.category !== 'weather' ? `[${ALERT_CATEGORY_LABEL[e.category]}] ` : ''}${e.ruleName}, ${getLocation(e.locationId).name}: ${e.value} ${e.unit} (threshold ${e.threshold} ${e.unit}). Issued ${formatTime(e.triggeredAt)}, valid to ${formatTime(e.validUntil)}.`);
     }
-    if (!out.length && status !== 'loading') out.push('No active alerts. Always check the source, time and data type shown with each value. BlueIntel is not an official warning service.');
+    const noData = !!bundle && DATASETS.every((d) => getFresh(locationId, d.key) === 'empty');
+    if (noData) out.push('No data has been received yet, so conditions and alerts cannot be assessed. Check back after the next data update.');
+    if (!out.length && status !== 'loading') out.push('No active alerts. Always check the source, time and data type shown with each value. Orizon Nimasa is not an official warning service.');
     if (status === 'loading' && !bundle) out.push('Loading latest data…');
     return out;
-  }, [activeEvents, staleKeys, status, bundle, error]);
+  }, [activeEvents, staleKeys, status, bundle, error, getFresh, locationId]);
 
   const text = items.join('    •    ');
   return (

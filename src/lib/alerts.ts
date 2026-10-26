@@ -26,6 +26,7 @@ export function evaluateRule(rule: AlertRule, series: Series, freshness: Freshne
     const validUntil = p.t + rule.validityHours * HOUR;
     const status = now > validUntil ? 'expired' : freshness === 'stale' ? 'suppressed_stale' : 'active';
     events.push({
+      category: rule.category,
       id: `${rule.id}:${series.locationId}:${p.t}`,
       ruleId: rule.id,
       ruleName: rule.name,

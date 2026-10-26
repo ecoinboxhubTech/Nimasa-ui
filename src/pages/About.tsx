@@ -9,15 +9,15 @@ const PRINCIPLES = [
 export default function About() {
   return (
     <div className="container section page">
-      <h1>About BlueIntel Nigeria</h1>
+      <h1>About Orizon Nimasa</h1>
       <p className="lead">
-        BlueIntel Nigeria aims to make relevant ocean and coastal information easier to find, understand and use, by combining selected, legally accessible
+        Orizon Nimasa aims to make relevant ocean and coastal information easier to find, understand and use, by combining selected, legally accessible
         marine, meteorological and environmental datasets in a mobile-friendly web application.
       </p>
 
       <div className="notice notice-warn">
         <div>
-          <strong>What this tool is not.</strong> BlueIntel does not guarantee safe voyages, navigation, fishing success or emergency response. It does not replace official
+          <strong>What this tool is not.</strong> Orizon Nimasa does not guarantee safe voyages, navigation, fishing success or emergency response. It does not replace official
           warnings, maritime authorities, navigational charts or professional advice. It does not predict fish locations.
         </div>
       </div>

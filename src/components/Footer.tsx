@@ -6,7 +6,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
     return (
       <footer className="footer footer-compact">
         <p>
-          BlueIntel is an informational tool, <strong>not</strong> an official forecast, warning or navigation aid. All values are synthetic sample data.
+          Orizon Nimasa is an informational tool, <strong>not</strong> an official forecast, warning or navigation aid. All values are synthetic sample data.
           <span className="attrib" dangerouslySetInnerHTML={{ __html: ` Map: ${TILE_ATTRIBUTION}` }} />
         </p>
         <Link to="/about">About &amp; limits</Link>
@@ -17,7 +17,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
     <footer className="footer">
       <div className="footer-grid">
         <div>
-          <strong className="footer-title">BlueIntel Nigeria</strong>
+          <strong className="footer-title">Orizon Nimasa</strong>
           <p>
             Source-labelled ocean and coastal information for selected Nigerian waters. This is an informational tool. It is
             <strong> not</strong> an official forecast, warning, navigation aid or emergency service, and it cannot guarantee safe

@@ -384,3 +384,6 @@ input[type='password'] { font: inherit; border: 0; background: var(--surface-low
 .footer-compact { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; align-items: center; justify-content: space-between; }
 .footer-compact p { margin: 0; max-width: 70ch; }
 .site .container { max-width: 80rem; }
+
+.export-menu { display: inline-flex; align-items: center; gap: 6px; }
+.export-menu select.btn { cursor: pointer; }

@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, BellOff, BellRing, Clock } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { ALERT_RULES, DATASETS, KIND_LABEL, LOCATIONS, getLocation, getSource } from '../config';
+import { ALERT_CATEGORY_LABEL, ALERT_RULES, DATASETS, KIND_LABEL, LOCATIONS, getLocation, getSource } from '../config';
 import { formatDateTime } from '../lib/time';
 import { KindBadge } from '../components/Badges';
 import { EmptyState, ErrorState, Loading } from '../components/States';
-import type { AlertStatus } from '../types';
+import type { AlertCategory, AlertStatus } from '../types';
 
 const STATUS_TEXT: Record<AlertStatus, string> = {
   active: 'Active',
@@ -17,12 +17,13 @@ const STATUS_TEXT: Record<AlertStatus, string> = {
 export default function Alerts() {
   const { status, bundle, events, staleKeys, setLocationId, error, reload } = useData();
   const [filter, setFilter] = useState('all');
+  const [category, setCategory] = useState<'all' | AlertCategory>('all');
   const [showExpired, setShowExpired] = useState(false);
 
   if (status === 'loading' && !bundle) return <div className="container section"><Loading /></div>;
   if (!bundle) return <div className="container section"><ErrorState message={error ?? 'Unknown error'} onRetry={reload} /></div>;
 
-  const list = events.filter((e) => (filter === 'all' || e.locationId === filter) && (showExpired || e.status !== 'expired'));
+  const list = events.filter((e) => (filter === 'all' || e.locationId === filter) && (category === 'all' || e.category === category) && (showExpired || e.status !== 'expired'));
 
   return (
     <div className="container section page">
@@ -45,6 +46,12 @@ export default function Alerts() {
             {LOCATIONS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
         </label>
+        <label>Type{' '}
+          <select value={category} onChange={(e) => setCategory(e.target.value as 'all' | AlertCategory)}>
+            <option value="all">All alert types</option>
+            {(Object.keys(ALERT_CATEGORY_LABEL) as AlertCategory[]).map((c) => <option key={c} value={c}>{ALERT_CATEGORY_LABEL[c]}</option>)}
+          </select>
+        </label>
         <label className="check"><input type="checkbox" checked={showExpired} onChange={(e) => setShowExpired(e.target.checked)} /> Show expired alerts</label>
       </div>
 
@@ -58,6 +65,7 @@ export default function Alerts() {
               <div className="alert-body">
                 <div className="alert-top">
                   <strong>{e.ruleName}</strong>
+                  {e.category && <span className="badge">{ALERT_CATEGORY_LABEL[e.category]}</span>}
                   <span className={`badge st-badge-${e.status}`}>{STATUS_TEXT[e.status]}</span>
                 </div>
                 <p>{getLocation(e.locationId).name}: {e.value} {e.unit} (threshold {e.threshold} {e.unit})</p>
@@ -79,11 +87,12 @@ export default function Alerts() {
       <h2>Alert rules</h2>
       <div className="table-scroll">
         <table>
-          <thead><tr><th>Rule</th><th>Condition</th><th>Suppression window</th><th>Valid for</th><th>Review status</th></tr></thead>
+          <thead><tr><th>Rule</th><th>Type</th><th>Condition</th><th>Suppression window</th><th>Valid for</th><th>Review status</th></tr></thead>
           <tbody>
             {ALERT_RULES.map((r) => (
               <tr key={r.id}>
                 <td>{r.name}</td>
+                <td>{ALERT_CATEGORY_LABEL[r.category ?? 'weather']}</td>
                 <td>{DATASETS.find((d) => d.key === r.datasetKey)!.label} {r.operator} {r.threshold} {r.unit}</td>
                 <td>{r.suppressionHours} h</td>
                 <td>{r.validityHours} h</td>

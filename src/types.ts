@@ -69,10 +69,15 @@ export interface Bundle {
   generatedAt: number;
   series: Record<string, Series>;
   runs: IngestionRun[];
+  /** Alerts evaluated by the server. When absent the UI evaluates the rules locally (mock mode). */
+  alerts?: AlertEvent[];
 }
+
+export type AlertCategory = 'weather' | 'inland_navigation' | 'ocean_navigation';
 
 export interface AlertRule {
   id: string;
+  category?: AlertCategory;
   name: string;
   datasetKey: DatasetKey;
   operator: '>=';
@@ -88,6 +93,7 @@ export type AlertStatus = 'active' | 'expired' | 'suppressed_stale';
 
 export interface AlertEvent {
   id: string;
+  category?: AlertCategory;
   ruleId: string;
   ruleName: string;
   locationId: string;

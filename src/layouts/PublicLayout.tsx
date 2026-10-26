@@ -18,10 +18,10 @@ export default function PublicLayout() {
       <a href="#content" className="skip">Skip to content</a>
       <header className="site-header">
         <div className="site-header-inner">
-          <Link to="/" className="brand" aria-label="BlueIntel Nigeria home">
+          <Link to="/" className="brand" aria-label="Orizon Nimasa home">
             <BrandMark />
             <span className="brand-text">
-              <span className="brand-name">BlueIntel</span>
+              <span className="brand-name">Orizon Nimasa</span>
               <span className="brand-sub">Nigeria · Ocean data</span>
             </span>
           </Link>
