@@ -1,4 +1,4 @@
-import type { AlertCategory, AlertRule, DatasetMeta, Location, SourceMeta, DataKind } from './types';
+import type { AlertCategory, AlertRule, Zone, DatasetMeta, Location, SourceMeta, DataKind } from './types';
 
 export const APP_NAME = 'Orizon Nimasa';
 export const TIMEZONE = 'Africa/Lagos';
@@ -9,19 +9,25 @@ export const TILE_ATTRIBUTION = import.meta.env.VITE_TILE_ATTRIBUTION ?? '&copy;
 
 /** MVP coverage area: Lagos coastline (placeholder until the product owner confirms the pilot area). FR-024. */
 export const COVERAGE_BOUNDS: [[number, number], [number, number]] = [
-  [6.25, 2.75],
+  [6.1, 2.75],
   [6.6, 3.95],
 ];
 export const MAP_CENTER: [number, number] = [6.42, 3.35];
 export const MAP_ZOOM = 9;
 
 export const LOCATIONS: Location[] = [
-  { id: 'badagry', name: 'Badagry', area: 'Western Lagos coast', lat: 6.38, lng: 2.88 },
-  { id: 'apapa', name: 'Lagos Harbour (Apapa)', area: 'Lagos Harbour approaches', lat: 6.4, lng: 3.34 },
-  { id: 'bar-beach', name: 'Bar Beach (Victoria Island)', area: 'Central Lagos coast', lat: 6.41, lng: 3.41 },
-  { id: 'lekki', name: 'Lekki', area: 'Eastern Lagos coast', lat: 6.43, lng: 3.54 },
-  { id: 'eleko', name: 'Eleko', area: 'Ibeju-Lekki coast', lat: 6.43, lng: 3.8 },
+  { id: 'badagry', name: 'Badagry', area: 'Western Lagos coast', lat: 6.38, lng: 2.88, zone: 'coastal' },
+  { id: 'apapa', name: 'Lagos Harbour (Apapa)', area: 'Lagos Harbour approaches', lat: 6.4, lng: 3.34, zone: 'coastal' },
+  { id: 'bar-beach', name: 'Bar Beach (Victoria Island)', area: 'Central Lagos coast', lat: 6.41, lng: 3.41, zone: 'coastal' },
+  { id: 'lekki', name: 'Lekki', area: 'Eastern Lagos coast', lat: 6.43, lng: 3.54, zone: 'coastal' },
+  { id: 'eleko', name: 'Eleko', area: 'Ibeju-Lekki coast', lat: 6.43, lng: 3.8, zone: 'coastal' },
+  { id: 'lagos-lagoon', name: 'Lagos Lagoon', area: 'Inland waterway (lagoon)', lat: 6.47, lng: 3.45, zone: 'waterway' },
+  // Coordinates approximate: replace with the values from GET /locations.
+  { id: 'badagry-creek', name: 'Badagry Creek', area: 'Inland waterway (creek)', lat: 6.44, lng: 2.93, zone: 'waterway' },
+  { id: 'lagos-offshore', name: 'Lagos Offshore Approach', area: 'Offshore shipping approaches', lat: 6.2, lng: 3.35, zone: 'offshore' },
 ];
+
+export const ZONE_LABEL: Record<Zone, string> = { coastal: 'Coastal', waterway: 'Waterway', offshore: 'Offshore' };
 
 export const DEFAULT_LOCATION_ID = 'lekki';
 
@@ -79,6 +85,16 @@ export const SOURCES: SourceMeta[] = [
     documentationUrl: 'https://open-meteo.com',
     note: 'Candidate for marine forecast data. Confirm commercial-use terms, limits and coverage before relying on it.',
   },
+  {
+    id: 'cand-meteosource',
+    name: 'Meteosource',
+    provider: 'Meteosource',
+    status: 'candidate',
+    licence: 'Not reviewed',
+    attribution: 'To be confirmed',
+    documentationUrl: 'https://www.meteosource.com',
+    note: 'Candidate weather provider, to be fetched by the backend only (the API key never reaches the browser). Marine variables such as wave height and sea temperature must be verified for the chosen plan and the Nigerian coast; anything unavailable is shown as unavailable. Confirm quota, caching, attribution and commercial terms first.',
+  },
 ];
 
 export const DATASETS: DatasetMeta[] = [
@@ -121,18 +137,45 @@ export const DATASETS: DatasetMeta[] = [
     ramp: [27, 27.6, 28.2, 28.8],
     description: 'Sea surface temperature (sample values).',
   },
+  {
+    key: 'visibility',
+    label: 'Visibility',
+    unit: 'km',
+    decimals: 1,
+    kind: 'model_estimate',
+    sourceId: 'demo-sample',
+    refreshMinutes: 60,
+    staleAfterMinutes: 180,
+    hasForecast: true,
+    ramp: [2, 4, 7, 10],
+    description: 'Horizontal visibility (sample values).',
+  },
+  {
+    key: 'current_speed',
+    label: 'Current speed',
+    unit: 'km/h',
+    decimals: 1,
+    kind: 'model_estimate',
+    sourceId: 'demo-sample',
+    refreshMinutes: 60,
+    staleAfterMinutes: 180,
+    hasForecast: true,
+    ramp: [1, 2, 3.5, 5],
+    description: 'Surface current speed (sample values).',
+  },
 ];
 
 /** Illustrative thresholds only. Real thresholds need review by a qualified marine or meteorological specialist. */
 export const ALERT_RULES: AlertRule[] = [
   {
     id: 'wave-high',
-    category: 'weather',
+    category: 'coastal',
     name: 'High wave height advisory',
     datasetKey: 'wave_height',
     operator: '>=',
-    threshold: 2.0,
+    threshold: 2,
     unit: 'm',
+    zones: ['coastal', 'offshore'],
     suppressionHours: 6,
     validityHours: 6,
     enabled: true,
@@ -140,7 +183,7 @@ export const ALERT_RULES: AlertRule[] = [
   },
   {
     id: 'wind-strong',
-    category: 'weather',
+    category: 'coastal',
     name: 'Strong wind advisory',
     datasetKey: 'wind_speed',
     operator: '>=',
@@ -152,39 +195,14 @@ export const ALERT_RULES: AlertRule[] = [
     reviewStatus: 'Illustrative threshold. Domain review pending',
   },
   {
-    id: 'nav-water-wave',
-    category: 'inland_navigation',
-    name: 'Water navigation caution: rough water for small craft',
-    datasetKey: 'wave_height',
-    operator: '>=',
-    threshold: 1.5,
-    unit: 'm',
-    suppressionHours: 6,
-    validityHours: 6,
-    enabled: true,
-    reviewStatus: 'Illustrative threshold. Domain review pending',
-  },
-  {
-    id: 'nav-water-wind',
-    category: 'inland_navigation',
-    name: 'Water navigation caution: strong wind on lagoons and creeks',
-    datasetKey: 'wind_speed',
-    operator: '>=',
-    threshold: 22,
-    unit: 'km/h',
-    suppressionHours: 3,
-    validityHours: 3,
-    enabled: true,
-    reviewStatus: 'Illustrative threshold. Domain review pending',
-  },
-  {
-    id: 'nav-ocean-wave',
+    id: 'nav-ocean-waves',
     category: 'ocean_navigation',
-    name: 'Ocean navigation advisory: heavy swell',
+    name: 'Ocean navigation: heavy swell',
     datasetKey: 'wave_height',
     operator: '>=',
     threshold: 2.5,
     unit: 'm',
+    zones: ['coastal', 'offshore'],
     suppressionHours: 6,
     validityHours: 6,
     enabled: true,
@@ -193,11 +211,82 @@ export const ALERT_RULES: AlertRule[] = [
   {
     id: 'nav-ocean-wind',
     category: 'ocean_navigation',
-    name: 'Ocean navigation advisory: gale-force wind',
+    name: 'Ocean navigation: gale-force wind',
     datasetKey: 'wind_speed',
     operator: '>=',
-    threshold: 34,
+    threshold: 40,
     unit: 'km/h',
+    zones: ['coastal', 'offshore'],
+    suppressionHours: 3,
+    validityHours: 3,
+    enabled: true,
+    reviewStatus: 'Illustrative threshold. Domain review pending',
+  },
+  {
+    id: 'nav-ocean-visibility',
+    category: 'ocean_navigation',
+    name: 'Ocean navigation: reduced visibility',
+    datasetKey: 'visibility',
+    operator: '<=',
+    threshold: 2,
+    unit: 'km',
+    zones: ['coastal', 'offshore'],
+    suppressionHours: 3,
+    validityHours: 3,
+    enabled: true,
+    reviewStatus: 'Illustrative threshold. Domain review pending',
+  },
+  {
+    id: 'nav-ocean-current',
+    category: 'ocean_navigation',
+    name: 'Ocean navigation: strong current',
+    datasetKey: 'current_speed',
+    operator: '>=',
+    threshold: 5.5,
+    unit: 'km/h',
+    zones: ['coastal', 'offshore'],
+    suppressionHours: 3,
+    validityHours: 3,
+    enabled: true,
+    reviewStatus: 'Illustrative threshold. Domain review pending',
+  },
+  {
+    id: 'nav-waterway-wind',
+    category: 'waterway_navigation',
+    name: 'Waterway navigation: small-craft wind',
+    datasetKey: 'wind_speed',
+    operator: '>=',
+    threshold: 22,
+    unit: 'km/h',
+    zones: ['waterway'],
+    suppressionHours: 3,
+    validityHours: 3,
+    enabled: true,
+    reviewStatus: 'Illustrative threshold. Domain review pending',
+  },
+  {
+    id: 'nav-waterway-visibility',
+    category: 'waterway_navigation',
+    name: 'Waterway navigation: reduced visibility',
+    datasetKey: 'visibility',
+    operator: '<=',
+    threshold: 1,
+    unit: 'km',
+    zones: ['waterway'],
+    suppressionHours: 3,
+    validityHours: 3,
+    enabled: true,
+    reviewStatus: 'Illustrative threshold. Domain review pending',
+  },
+  {
+    id: 'nav-waterway-current',
+    category: 'waterway_navigation',
+    name: 'Waterway navigation: strong current',
+    datasetKey: 'current_speed',
+    operator: '>=',
+    threshold: 4,
+    unit: 'km/h',
+    zones: ['waterway'],
     suppressionHours: 3,
     validityHours: 3,
     enabled: true,
@@ -206,9 +295,9 @@ export const ALERT_RULES: AlertRule[] = [
 ];
 
 export const ALERT_CATEGORY_LABEL: Record<AlertCategory, string> = {
-  weather: 'Weather & sea state',
-  inland_navigation: 'Water navigation',
+  coastal: 'Coastal conditions',
   ocean_navigation: 'Ocean navigation',
+  waterway_navigation: 'Waterway navigation',
 };
 
 export const RAMP_COLOURS = ['#76f3ea', '#2aa6b8', '#0f6cbd', '#6a5acd', '#c2185b'];

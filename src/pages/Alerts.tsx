@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, BellOff, BellRing, Clock } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { ALERT_CATEGORY_LABEL, ALERT_RULES, DATASETS, KIND_LABEL, LOCATIONS, getLocation, getSource } from '../config';
+import { ALERT_CATEGORY_LABEL, ZONE_LABEL, ALERT_RULES, DATASETS, KIND_LABEL, LOCATIONS, getLocation, getSource } from '../config';
 import { formatDateTime } from '../lib/time';
 import { KindBadge } from '../components/Badges';
-import { EmptyState, ErrorState, Loading } from '../components/States';
+import { AlertsSkeleton, EmptyState, ErrorState } from '../components/States';
 import type { AlertCategory, AlertStatus } from '../types';
 
 const STATUS_TEXT: Record<AlertStatus, string> = {
@@ -20,7 +20,7 @@ export default function Alerts() {
   const [category, setCategory] = useState<'all' | AlertCategory>('all');
   const [showExpired, setShowExpired] = useState(false);
 
-  if (status === 'loading' && !bundle) return <div className="container section"><Loading /></div>;
+  if (status === 'loading' && !bundle) return <AlertsSkeleton />;
   if (!bundle) return <div className="container section"><ErrorState message={error ?? 'Unknown error'} onRetry={reload} /></div>;
 
   const list = events.filter((e) => (filter === 'all' || e.locationId === filter) && (category === 'all' || e.category === category) && (showExpired || e.status !== 'expired'));
@@ -70,7 +70,7 @@ export default function Alerts() {
                 </div>
                 <p>{getLocation(e.locationId).name}: {e.value} {e.unit} (threshold {e.threshold} {e.unit})</p>
                 <dl className="alert-meta">
-                  <div><dt>Trigger</dt><dd>{DATASETS.find((d) => d.key === e.datasetKey)!.label} ≥ {e.threshold} {e.unit}</dd></div>
+                  <div><dt>Trigger</dt><dd>{DATASETS.find((d) => d.key === e.datasetKey)!.label} {ALERT_RULES.find((r) => r.id === e.ruleId)?.operator ?? '≥'} {e.threshold} {e.unit}</dd></div>
                   <div><dt>Data type</dt><dd><KindBadge kind={e.dataKind} /></dd></div>
                   <div><dt>Source</dt><dd>{getSource(e.sourceId).name}</dd></div>
                   <div><dt>Source time</dt><dd>{formatDateTime(e.sourceTimestamp)}</dd></div>
@@ -92,8 +92,8 @@ export default function Alerts() {
             {ALERT_RULES.map((r) => (
               <tr key={r.id}>
                 <td>{r.name}</td>
-                <td>{ALERT_CATEGORY_LABEL[r.category ?? 'weather']}</td>
-                <td>{DATASETS.find((d) => d.key === r.datasetKey)!.label} {r.operator} {r.threshold} {r.unit}</td>
+                <td>{ALERT_CATEGORY_LABEL[r.category ?? 'coastal']}</td>
+                <td>{DATASETS.find((d) => d.key === r.datasetKey)!.label} {r.operator} {r.threshold} {r.unit}{r.zones ? ` (${r.zones.map((z) => ZONE_LABEL[z].toLowerCase()).join(', ')})` : ''}</td>
                 <td>{r.suppressionHours} h</td>
                 <td>{r.validityHours} h</td>
                 <td>{r.reviewStatus}</td>

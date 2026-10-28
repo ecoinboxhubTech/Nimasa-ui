@@ -14,7 +14,7 @@ export default function AlertTicker() {
       out.push(`Data-quality warning: ${names} feed is stale. Alerts for stale data are suppressed.`);
     }
     for (const e of activeEvents) {
-      out.push(`${e.category && e.category !== 'weather' ? `[${ALERT_CATEGORY_LABEL[e.category]}] ` : ''}${e.ruleName}, ${getLocation(e.locationId).name}: ${e.value} ${e.unit} (threshold ${e.threshold} ${e.unit}). Issued ${formatTime(e.triggeredAt)}, valid to ${formatTime(e.validUntil)}.`);
+      out.push(`${e.category && e.category !== 'coastal' ? `[${ALERT_CATEGORY_LABEL[e.category]}] ` : ''}${e.ruleName}, ${getLocation(e.locationId).name}: ${e.value} ${e.unit} (threshold ${e.threshold} ${e.unit}). Issued ${formatTime(e.triggeredAt)}, valid to ${formatTime(e.validUntil)}.`);
     }
     const noData = !!bundle && DATASETS.every((d) => getFresh(locationId, d.key) === 'empty');
     if (noData) out.push('No data has been received yet, so conditions and alerts cannot be assessed. Check back after the next data update.');

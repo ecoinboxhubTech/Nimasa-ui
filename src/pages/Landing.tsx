@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Clock, Eye, FileSearch, Layers, Thermometer, Waves, Wind } from 'lucide-react';
+import { ArrowRight, Clock, Eye, FileSearch, Layers, Navigation, Thermometer, Waves, Wind } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { DATASETS, SOURCES, getLocation } from '../config';
 import { latestValid } from '../lib/freshness';
@@ -7,7 +7,7 @@ import { formatDateTime } from '../lib/time';
 import { FreshBadge, KindBadge } from '../components/Badges';
 import type { DatasetKey } from '../types';
 
-const ICONS: Record<DatasetKey, typeof Waves> = { wave_height: Waves, wind_speed: Wind, sst: Thermometer };
+const ICONS: Record<DatasetKey, typeof Waves> = { wave_height: Waves, wind_speed: Wind, sst: Thermometer, visibility: Eye, current_speed: Navigation };
 
 const PILLARS = [
   { icon: FileSearch, title: 'Source on every value', body: 'Each number names its provider, dataset and unit, and links to its licence and attribution.' },

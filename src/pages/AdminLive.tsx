@@ -8,10 +8,8 @@ import { FreshBadge } from '../components/Badges';
 import { Loading } from '../components/States';
 import {
   HttpError, adminAudit, adminFeeds, adminHealth, adminRules, adminRunIngestion, normaliseSourceId, parseUtc,
-  type AdminAudit, type AdminFeed, type AdminRule, type AdminRun,
+  type AdminAudit, type AdminFeed, type AdminRule, type AdminRun, type Health,
 } from '../api/client';
-
-interface Health { status: string; app: Record<string, string>; feeds: { status: string } }
 
 const when = (s: string | null) => (s ? formatDateTime(parseUtc(s)) : '–');
 const locName = (id: string) => LOCATIONS.find((l) => l.id === id)?.name ?? id;
@@ -60,7 +58,7 @@ export default function AdminLive() {
     }
   };
 
-  const feedsOk = health?.feeds.status === 'ok';
+  const feedsOk = health?.feeds.status === 'healthy';
   const lastOk = runs.find((r) => r.status === 'success');
 
   return (

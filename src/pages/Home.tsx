@@ -1,19 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Activity, AlertTriangle, Download, Eye, Gauge, MapPin, Thermometer, Waves, Wind } from 'lucide-react';
+import { Activity, AlertTriangle, Download, Eye, Gauge, MapPin, Navigation, Thermometer, Waves, Wind } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { ALERT_RULES, DATASETS, KIND_LABEL, LOCATIONS, getDataset, getLocation, getSource, seriesKey } from '../config';
+import { ALERT_RULES, DATASETS, ZONE_LABEL, KIND_LABEL, LOCATIONS, getDataset, getLocation, getSource, seriesKey } from '../config';
 import { latestValid, ageMinutes } from '../lib/freshness';
 import { dayKey, formatDateTime, formatDayLabel, formatDayMonth, timeAgo } from '../lib/time';
 import { buildCsv, downloadText } from '../lib/csv';
 import { exportChart, type ExportFormat } from '../lib/export';
+import { USE_API, exportUrl } from '../api/client';
 import { FreshBadge, KindBadge } from '../components/Badges';
-import { EmptyState, ErrorState, Loading } from '../components/States';
+import { DashboardSkeleton, EmptyState, ErrorState } from '../components/States';
 import MapView, { MapLegend } from '../components/MapView';
 import TrendChart from '../components/TrendChart';
 import type { DatasetKey } from '../types';
 
-const ICONS: Record<DatasetKey, typeof Waves> = { wave_height: Waves, wind_speed: Wind, sst: Thermometer };
+const ICONS: Record<DatasetKey, typeof Waves> = { wave_height: Waves, wind_speed: Wind, sst: Thermometer, visibility: Eye, current_speed: Navigation };
 const RANGES = [
   { key: '24h', hours: 24, label: '24 h' },
   { key: '48h', hours: 48, label: '48 h' },
@@ -54,7 +55,7 @@ export default function Home() {
     return [...days.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(0, 3).map(([, v]) => v);
   }, [getSeries, locationId, now]);
 
-  if (status === 'loading' && !bundle) return <div className="container section"><Loading label="Loading coastal conditions…" /></div>;
+  if (status === 'loading' && !bundle) return <DashboardSkeleton />;
   if (!bundle) return <div className="container section"><ErrorState message={error ?? 'Unknown error'} onRetry={reload} /></div>;
 
   const waveDs = getDataset('wave_height');
@@ -120,6 +121,14 @@ export default function Home() {
                   const f = e.target.value;
                   if (!chartSeries || !f) return;
                   const base = `orizon-nimasa_${locationId}_${chartKey}`;
+                  if (USE_API) {
+                    // Live mode: the backend builds the file (same query as /series; times carry a timezone).
+                    const a = document.createElement('a');
+                    a.href = exportUrl(f as 'csv' | 'png' | 'jpg' | 'pdf', locationId, chartKey, now - hours * 3600000, now + 48 * 3600000);
+                    a.download = `${locationId}_${chartKey}.${f}`;
+                    a.click();
+                    return;
+                  }
                   const sourceName = getSource(chartDs.sourceId).name;
                   if (f === 'csv') downloadText(`${base}.csv`, buildCsv(chartPoints, chartDs, loc, sourceName));
                   else void exportChart(f as ExportFormat, { points: chartPoints, dataset: chartDs, location: loc, sourceName, now, threshold: rule ? { value: rule.threshold, label: `Advisory threshold ${rule.threshold} ${rule.unit} (illustrative)` } : undefined }, base);
@@ -181,8 +190,13 @@ export default function Home() {
                 {(() => { const s = getSeries(locationId, mapLayer); return s?.sourceTimestamp ? formatDateTime(s.sourceTimestamp) : 'no data'; })()}
               </p>
               <div className="chips" aria-label="Locations">
-                {LOCATIONS.map((l) => (
-                  <button key={l.id} className={l.id === locationId ? 'chip on' : 'chip'} onClick={() => setLocationId(l.id)} aria-pressed={l.id === locationId}>{l.name}</button>
+                {(['coastal', 'waterway', 'offshore'] as const).map((z) => (
+                  <span key={z} className="chip-group" role="group" aria-label={`${ZONE_LABEL[z]} locations`}>
+                    <small className="muted">{ZONE_LABEL[z]}</small>
+                    {LOCATIONS.filter((l) => l.zone === z).map((l) => (
+                      <button key={l.id} className={l.id === locationId ? 'chip on' : 'chip'} onClick={() => setLocationId(l.id)} aria-pressed={l.id === locationId}>{l.name}</button>
+                    ))}
+                  </span>
                 ))}
               </div>
               <p className="muted small">Select a marker or chip to update the chart. Only marked locations have data; the dashed box is the MVP coverage area.</p>

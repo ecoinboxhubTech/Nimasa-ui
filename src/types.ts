@@ -1,7 +1,8 @@
 export type DataKind = 'observation' | 'forecast' | 'model_estimate' | 'derived';
 export type Freshness = 'fresh' | 'stale' | 'empty';
 export type FeedMode = 'normal' | 'stale' | 'error';
-export type DatasetKey = 'wave_height' | 'wind_speed' | 'sst';
+export type DatasetKey = 'wave_height' | 'wind_speed' | 'sst' | 'visibility' | 'current_speed';
+export type Zone = 'coastal' | 'waterway' | 'offshore';
 
 export interface Location {
   id: string;
@@ -9,6 +10,7 @@ export interface Location {
   area: string;
   lat: number;
   lng: number;
+  zone: Zone;
 }
 
 export interface DatasetMeta {
@@ -73,14 +75,16 @@ export interface Bundle {
   alerts?: AlertEvent[];
 }
 
-export type AlertCategory = 'weather' | 'inland_navigation' | 'ocean_navigation';
+export type AlertCategory = 'coastal' | 'ocean_navigation' | 'waterway_navigation';
 
 export interface AlertRule {
   id: string;
   category?: AlertCategory;
   name: string;
   datasetKey: DatasetKey;
-  operator: '>=';
+  operator: '>=' | '<=';
+  /** Zones the rule applies to. Omitted means all zones. */
+  zones?: Zone[];
   threshold: number;
   unit: string;
   suppressionHours: number;

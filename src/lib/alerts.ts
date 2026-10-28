@@ -6,7 +6,7 @@ const HOUR = 3600000;
 /**
  * Evaluate one rule against one validated series.
  * - Missing/invalid values and forecast points never trigger (FR-007, FR-012).
- * - Threshold comparison is inclusive (>=).
+ * - Threshold comparison is inclusive (>= or <=).
  * - Repeat triggers inside the suppression window are dropped (FR-014).
  * - If the feed is stale the alert is marked suppressed instead of active (FR-015).
  */
@@ -19,7 +19,7 @@ export function evaluateRule(rule: AlertRule, series: Series, freshness: Freshne
   for (const p of points) {
     if (p.kind === 'forecast' || p.t > now) continue;
     if (p.value == null || !Number.isFinite(p.value)) continue;
-    if (p.value < rule.threshold) continue;
+    if (rule.operator === '>=' ? p.value < rule.threshold : p.value > rule.threshold) continue;
     if (lastTrigger != null && p.t - lastTrigger < rule.suppressionHours * HOUR) continue;
 
     lastTrigger = p.t;
@@ -41,7 +41,7 @@ export function evaluateRule(rule: AlertRule, series: Series, freshness: Freshne
       dataKind: p.kind,
       sourceId: series.sourceId,
       status,
-      message: `${rule.name}: ${p.value} ${rule.unit} reached the ${rule.threshold} ${rule.unit} threshold (${KIND_LABEL[p.kind].toLowerCase()}).`,
+      message: `${rule.name}: ${p.value} ${rule.unit} reached the ${rule.operator} ${rule.threshold} ${rule.unit} threshold (${KIND_LABEL[p.kind].toLowerCase()}).`,
     });
   }
   return events;

@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
-import { Bell, ChevronDown, MapPin, Menu, Thermometer, Waves, Wind } from 'lucide-react';
+import { Bell, ChevronDown, Eye, MapPin, Menu, Navigation, Thermometer, Waves, Wind } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { DATASETS, LOCATIONS } from '../config';
 import { latestValid } from '../lib/freshness';
 import type { DatasetKey } from '../types';
 
-const ICONS: Record<DatasetKey, typeof Waves> = { wave_height: Waves, wind_speed: Wind, sst: Thermometer };
+const ICONS: Record<DatasetKey, typeof Waves> = { wave_height: Waves, wind_speed: Wind, sst: Thermometer, visibility: Eye, current_speed: Navigation };
 
 export default function Topbar({ onMenu }: { onMenu: () => void }) {
   const { activeEvents, locationId, setLocationId, getSeries, now } = useData();

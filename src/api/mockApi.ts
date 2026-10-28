@@ -28,12 +28,15 @@ function rnd(seed: number, i: number) {
   return x - Math.floor(x);
 }
 
-const BASE: Record<string, { wave: number; wind: number; sst: number }> = {
-  badagry: { wave: 1.35, wind: 15, sst: 27.9 },
-  apapa: { wave: 1.0, wind: 13, sst: 28.2 },
-  'bar-beach': { wave: 1.5, wind: 16, sst: 28.0 },
-  lekki: { wave: 1.75, wind: 17, sst: 28.1 },
-  eleko: { wave: 1.6, wind: 18, sst: 27.8 },
+const BASE: Record<string, { wave: number; wind: number; sst: number; vis: number; cur: number }> = {
+  badagry: { wave: 1.35, wind: 15, sst: 27.9, vis: 8, cur: 1.8 },
+  apapa: { wave: 1.0, wind: 13, sst: 28.2, vis: 6.5, cur: 2.2 },
+  'bar-beach': { wave: 1.5, wind: 16, sst: 28.0, vis: 8.5, cur: 2.0 },
+  lekki: { wave: 1.75, wind: 17, sst: 28.1, vis: 7.5, cur: 2.4 },
+  eleko: { wave: 1.6, wind: 18, sst: 27.8, vis: 8, cur: 2.6 },
+  'lagos-lagoon': { wave: 0.4, wind: 14, sst: 29.0, vis: 4.5, cur: 1.5 },
+  'badagry-creek': { wave: 0.3, wind: 12, sst: 29.2, vis: 4, cur: 1.2 },
+  'lagos-offshore': { wave: 2.1, wind: 24, sst: 27.6, vis: 9.5, cur: 3.6 },
 };
 
 function valueAt(ds: DatasetKey, loc: string, t: number): number {
@@ -49,6 +52,10 @@ function valueAt(ds: DatasetKey, loc: string, t: number): number {
       return Math.max(2, b.wind + 6 * Math.sin(((hourUtc - 8) / 24) * 2 * Math.PI) + 4 * Math.sin(h / 41) + 5 * n);
     case 'sst':
       return b.sst + 0.35 * Math.sin(((hourUtc - 9) / 24) * 2 * Math.PI) + 0.2 * Math.sin(h / 90) + 0.1 * n;
+    case 'visibility':
+      return Math.max(0.5, b.vis + 2 * Math.sin(((hourUtc - 14) / 24) * 2 * Math.PI) + 1.2 * Math.sin(h / 33) + 1.2 * n);
+    case 'current_speed':
+      return Math.max(0.2, b.cur + 0.8 * Math.sin(h / 6.2 + (seed % 5)) + 0.4 * Math.sin(h / 47) + 0.3 * n);
   }
 }
 

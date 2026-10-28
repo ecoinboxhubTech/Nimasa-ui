@@ -90,7 +90,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           const s = bundle.series[seriesKey(l.id, d.key)];
           const f = getFreshness(s.sourceTimestamp, d.staleAfterMinutes, now);
           if (f === 'stale') stale.push(d.key);
-          if (!bundle.alerts) for (const r of ALERT_RULES.filter((r) => r.datasetKey === d.key)) ev.push(...evaluateRule(r, s, f, now));
+          if (!bundle.alerts) for (const r of ALERT_RULES.filter((r) => r.datasetKey === d.key && (!r.zones || r.zones.includes(l.zone)))) ev.push(...evaluateRule(r, s, f, now));
         }
       }
     }

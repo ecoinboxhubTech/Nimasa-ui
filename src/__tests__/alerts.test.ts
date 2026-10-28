@@ -43,4 +43,10 @@ describe('evaluateRule', () => {
     expect(evaluateRule({ ...rule, enabled: false }, mk([p(1, 3)]), 'fresh', NOW)).toHaveLength(0);
     expect(evaluateRule(rule, mk([]), 'empty', NOW)).toHaveLength(0);
   });
+  it('supports <= rules such as low visibility, inclusive at the threshold', () => {
+    const low: AlertRule = { ...rule, operator: '<=', threshold: 2, unit: 'km' };
+    expect(evaluateRule(low, mk([p(1, 2.1)]), 'fresh', NOW)).toHaveLength(0);
+    expect(evaluateRule(low, mk([p(1, 2)]), 'fresh', NOW)).toHaveLength(1);
+    expect(evaluateRule(low, mk([p(1, 0.8)]), 'fresh', NOW)).toHaveLength(1);
+  });
 });

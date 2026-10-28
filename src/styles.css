@@ -387,3 +387,13 @@ input[type='password'] { font: inherit; border: 0; background: var(--surface-low
 
 .export-menu { display: inline-flex; align-items: center; gap: 6px; }
 .export-menu select.btn { cursor: pointer; }
+
+.chip-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-right: 12px; }
+
+/* Skeleton loaders */
+.sk { display: block; max-width: 100%; border-radius: 8px; background: linear-gradient(90deg, var(--surface-high) 25%, var(--surface-highest) 50%, var(--surface-high) 75%); background-size: 200% 100%; animation: sk-shimmer 1.4s ease-in-out infinite; }
+.sk-card { display: flex; flex-direction: column; gap: .875rem; }
+.sk-stack { display: flex; flex-direction: column; gap: .75rem; }
+.sk-row { display: flex; align-items: center; gap: .75rem; }
+@keyframes sk-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
