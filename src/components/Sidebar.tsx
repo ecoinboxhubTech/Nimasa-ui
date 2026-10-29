@@ -11,13 +11,7 @@ const NAV = [
 ];
 
 export function BrandMark({ size = 36 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" className="brand-mark">
-      <rect width="64" height="64" rx="20" fill="#0f6cbd" />
-      <path d="M10 40c8-10 14-10 22 0s14 10 22 0" fill="none" stroke="#76f3ea" strokeWidth="6" strokeLinecap="round" />
-      <path d="M10 25c8-10 14-10 22 0s14 10 22 0" fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" />
-    </svg>
-  );
+  return <img src="/nimasa-logo.png" width={size} height={size} alt="" aria-hidden="true" className="brand-mark" />;
 }
 
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {

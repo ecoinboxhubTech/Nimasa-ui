@@ -1,0 +1,14 @@
+{
+  "name": "Orizon Nimasa",
+  "short_name": "Orizon Nimasa",
+  "description": "Source-labelled ocean and coastal conditions for Nigeria's coast.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0b2a45",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
