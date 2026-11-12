@@ -27,8 +27,8 @@ export default function About() {
 
       <h2>Privacy</h2>
       <p>
-        The public MVP requires no account and collects no personal information. Feedback is optional and collects only what is needed. A full privacy notice and a review
-        against Nigerian data-protection obligations are required before production launch.
+        The public service requires no account and collects no personal information. Feedback is optional and collects only what is needed. A full privacy notice and a
+        review against Nigerian data-protection obligations are required before production launch.
       </p>
     </div>
   );

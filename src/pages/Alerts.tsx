@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, BellOff, BellRing, Clock } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { ALERT_CATEGORY_LABEL, ZONE_LABEL, ALERT_RULES, DATASETS, KIND_LABEL, LOCATIONS, getLocation, getSource } from '../config';
+import { ALERT_CATEGORY_LABEL, ZONE_LABEL } from '../config';
 import { formatDateTime } from '../lib/time';
 import { KindBadge } from '../components/Badges';
 import { AlertsSkeleton, EmptyState, ErrorState } from '../components/States';
@@ -15,7 +15,7 @@ const STATUS_TEXT: Record<AlertStatus, string> = {
 };
 
 export default function Alerts() {
-  const { status, bundle, events, staleKeys, setLocationId, error, reload } = useData();
+  const { status, bundle, events, staleKeys, setLocationId, error, reload, locations, datasets, sources, alertRules } = useData();
   const [filter, setFilter] = useState('all');
   const [category, setCategory] = useState<'all' | AlertCategory>('all');
   const [showExpired, setShowExpired] = useState(false);
@@ -43,7 +43,7 @@ export default function Alerts() {
         <label>Location{' '}
           <select value={filter} onChange={(e) => setFilter(e.target.value)}>
             <option value="all">All locations</option>
-            {LOCATIONS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+            {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
           </select>
         </label>
         <label>Type{' '}
@@ -68,11 +68,11 @@ export default function Alerts() {
                   {e.category && <span className="badge">{ALERT_CATEGORY_LABEL[e.category]}</span>}
                   <span className={`badge st-badge-${e.status}`}>{STATUS_TEXT[e.status]}</span>
                 </div>
-                <p>{getLocation(e.locationId).name}: {e.value} {e.unit} (threshold {e.threshold} {e.unit})</p>
+                <p>{(locations.find((l) => l.id === e.locationId)?.name ?? e.locationId)}: {e.value} {e.unit} (threshold {e.threshold} {e.unit})</p>
                 <dl className="alert-meta">
-                  <div><dt>Trigger</dt><dd>{DATASETS.find((d) => d.key === e.datasetKey)!.label} {ALERT_RULES.find((r) => r.id === e.ruleId)?.operator ?? '≥'} {e.threshold} {e.unit}</dd></div>
+                  <div><dt>Trigger</dt><dd>{(datasets.find((d) => d.key === e.datasetKey)?.label ?? e.datasetKey)} {alertRules.find((r) => r.id === e.ruleId)?.operator ?? '≥'} {e.threshold} {e.unit}</dd></div>
                   <div><dt>Data type</dt><dd><KindBadge kind={e.dataKind} /></dd></div>
-                  <div><dt>Source</dt><dd>{getSource(e.sourceId).name}</dd></div>
+                  <div><dt>Source</dt><dd>{sources.find((s) => s.id === e.sourceId)?.name ?? e.sourceId}</dd></div>
                   <div><dt>Source time</dt><dd>{formatDateTime(e.sourceTimestamp)}</dd></div>
                   <div><dt>Issued</dt><dd>{formatDateTime(e.triggeredAt)}</dd></div>
                   <div><dt>Valid until</dt><dd><Clock size={12} aria-hidden /> {formatDateTime(e.validUntil)}</dd></div>
@@ -89,11 +89,11 @@ export default function Alerts() {
         <table>
           <thead><tr><th>Rule</th><th>Type</th><th>Condition</th><th>Suppression window</th><th>Valid for</th><th>Review status</th></tr></thead>
           <tbody>
-            {ALERT_RULES.map((r) => (
+            {alertRules.map((r) => (
               <tr key={r.id}>
                 <td>{r.name}</td>
                 <td>{ALERT_CATEGORY_LABEL[r.category ?? 'coastal']}</td>
-                <td>{DATASETS.find((d) => d.key === r.datasetKey)!.label} {r.operator} {r.threshold} {r.unit}{r.zones ? ` (${r.zones.map((z) => ZONE_LABEL[z].toLowerCase()).join(', ')})` : ''}</td>
+                <td>{(datasets.find((d) => d.key === r.datasetKey)?.label ?? r.datasetKey)} {r.operator} {r.threshold} {r.unit}{r.zones ? ` (${r.zones.map((z) => ZONE_LABEL[z].toLowerCase()).join(', ')})` : ''}</td>
                 <td>{r.suppressionHours} h</td>
                 <td>{r.validityHours} h</td>
                 <td>{r.reviewStatus}</td>
@@ -103,9 +103,10 @@ export default function Alerts() {
         </table>
       </div>
       <p className="muted">
-        Rules ignore missing values and forecasts. A repeat trigger inside the suppression window does not create a new alert. Thresholds shown are placeholders
-        and must be reviewed by a qualified marine or meteorological specialist before any pilot ({KIND_LABEL.observation.toLowerCase()} data preferred where available).
+        Rules ignore missing values and forecasts. A repeat trigger inside the suppression window does not create a new alert. Thresholds and review status are
+        configured by operations staff.
       </p>
     </div>
   );
 }
+

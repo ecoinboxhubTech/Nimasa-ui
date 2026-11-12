@@ -2,12 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Activity, AlertTriangle, Download, Eye, Gauge, MapPin, Navigation, Thermometer, Waves, Wind } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { ALERT_RULES, DATASETS, ZONE_LABEL, KIND_LABEL, LOCATIONS, getDataset, getLocation, getSource, seriesKey } from '../config';
+import { ZONE_LABEL, KIND_LABEL, seriesKey } from '../config';
 import { latestValid, ageMinutes } from '../lib/freshness';
 import { dayKey, formatDateTime, formatDayLabel, formatDayMonth, timeAgo } from '../lib/time';
-import { buildCsv, downloadText } from '../lib/csv';
-import { exportChart, type ExportFormat } from '../lib/export';
-import { USE_API, exportUrl } from '../api/client';
+import { exportUrl } from '../api/client';
 import { FreshBadge, KindBadge } from '../components/Badges';
 import { DashboardSkeleton, EmptyState, ErrorState } from '../components/States';
 import MapView, { MapLegend } from '../components/MapView';
@@ -23,8 +21,8 @@ const RANGES = [
 
 export default function Home() {
   const d = useData();
-  const { status, bundle, now, locationId, setLocationId, getSeries, getFresh, activeEvents, error, reload, mode } = d;
-  const loc = getLocation(locationId);
+  const { status, bundle, now, locationId, setLocationId, getSeries, getFresh, activeEvents, error, reload, datasets, locations, sources, alertRules, metadataError } = d;
+  const loc = locations.find((l) => l.id === locationId) ?? locations[0];
   const [mapLayer, setMapLayer] = useState<DatasetKey>('wave_height');
   const [chartKey, setChartKey] = useState<DatasetKey>('wave_height');
   const [range, setRange] = useState('48h');
@@ -57,18 +55,19 @@ export default function Home() {
 
   if (status === 'loading' && !bundle) return <DashboardSkeleton />;
   if (!bundle) return <div className="container section"><ErrorState message={error ?? 'Unknown error'} onRetry={reload} /></div>;
+  if (!datasets.length || !locations.length) return <div className="container section"><ErrorState message={metadataError ?? 'No locations or datasets are configured.'} onRetry={reload} /></div>;
 
-  const waveDs = getDataset('wave_height');
-  const chartDs = getDataset(chartKey);
+  const waveDs = (datasets.find((x) => x.key === 'wave_height') ?? datasets[0]);
+  const chartDs = datasets.find((x) => x.key === chartKey) ?? datasets[0];
   const chartSeries = getSeries(locationId, chartKey);
   const chartFresh = getFresh(locationId, chartKey);
   const hours = RANGES.find((r) => r.key === range)!.hours;
   const chartPoints = (chartSeries?.points ?? []).filter((p) => p.t >= now - hours * 3600000 && p.t <= now + 48 * 3600000);
-  const rule = ALERT_RULES.find((r) => r.datasetKey === chartKey);
+  const rule = alertRules.find((r) => r.datasetKey === chartKey && r.enabled);
   const locEvents = activeEvents.filter((e) => e.locationId === locationId);
-  const anyStale = DATASETS.some((x) => getFresh(locationId, x.key) === 'stale');
-  const anyEmpty = DATASETS.some((x) => getFresh(locationId, x.key) === 'empty');
-  const obsStamp = Math.max(0, ...DATASETS.map((x) => getSeries(locationId, x.key)?.sourceTimestamp ?? 0));
+  const anyStale = datasets.some((x) => getFresh(locationId, x.key) === 'stale');
+  const anyEmpty = datasets.some((x) => getFresh(locationId, x.key) === 'empty');
+  const obsStamp = Math.max(0, ...datasets.map((x) => getSeries(locationId, x.key)?.sourceTimestamp ?? 0));
 
   // Rule-based plain-language summary (derived, not AI).
   const wavePoint = latestValid(getSeries(locationId, 'wave_height'), now);
@@ -78,18 +77,17 @@ export default function Home() {
     return s.points.find((p) => p.t === wavePoint.t - 6 * 3600000 && p.value != null);
   })();
   const windPoint = latestValid(getSeries(locationId, 'wind_speed'), now);
+  const sourceName = (id: string) => sources.find((source) => source.id === id)?.name ?? id;
+  const sourceFor = (id: string) => sources.find((source) => source.id === id);
 
   return (
     <>
-      {(status === 'error' || mode === 'stale') && (
+      {metadataError && <div className="container notice-wrap"><div className="notice notice-warn" role="alert"><AlertTriangle size={18} aria-hidden /> Configuration refresh failed; showing the last loaded metadata. {metadataError}</div></div>}
+      {status === 'error' && (
         <div className="container notice-wrap"><div className="notice notice-warn" role="alert">
           <AlertTriangle size={18} aria-hidden />
           <div>
-            {status === 'error' ? (
-              <><strong>Data service unavailable.</strong> {error} The values below are the last ones loaded and may be out of date. <button className="linklike" onClick={reload}>Retry</button></>
-            ) : (
-              <><strong>Source feed is delayed.</strong> Values marked “Stale” are older than their freshness limit and are not treated as current.</>
-            )}
+            <strong>Data service unavailable.</strong> {error} The values below are the last ones loaded and may be out of date. <button className="linklike" onClick={reload}>Retry</button>
           </div>
         </div></div>
       )}
@@ -99,10 +97,10 @@ export default function Home() {
           <div>
             <div className="cmd-tags">
               <span className="tag">{loc.area}</span>
-              <span className="live"><span className="pulse" aria-hidden><i /><i /></span> Sample data stream</span>
+              <span className="live"><span className="pulse" aria-hidden><i /><i /></span> API data</span>
             </div>
             <h1 id="hero-title">Coastal Conditions</h1>
-            <p className="muted">{loc.name} · {formatDayMonth(now)} · Sample data for demonstration</p>
+            <p className="muted">{loc.name} · {formatDayMonth(now)} · Source, timestamp and freshness are shown with each value.</p>
           </div>
           <div className="cmd-actions">
             <div className="segmented" role="group" aria-label="Time range">
@@ -120,18 +118,11 @@ export default function Home() {
                 onChange={(e) => {
                   const f = e.target.value;
                   if (!chartSeries || !f) return;
-                  const base = `orizon-nimasa_${locationId}_${chartKey}`;
-                  if (USE_API) {
-                    // Live mode: the backend builds the file (same query as /series; times carry a timezone).
-                    const a = document.createElement('a');
-                    a.href = exportUrl(f as 'csv' | 'png' | 'jpg' | 'pdf', locationId, chartKey, now - hours * 3600000, now + 48 * 3600000);
-                    a.download = `${locationId}_${chartKey}.${f}`;
-                    a.click();
-                    return;
-                  }
-                  const sourceName = getSource(chartDs.sourceId).name;
-                  if (f === 'csv') downloadText(`${base}.csv`, buildCsv(chartPoints, chartDs, loc, sourceName));
-                  else void exportChart(f as ExportFormat, { points: chartPoints, dataset: chartDs, location: loc, sourceName, now, threshold: rule ? { value: rule.threshold, label: `Advisory threshold ${rule.threshold} ${rule.unit} (illustrative)` } : undefined }, base);
+                  // The backend builds the file (same query as /series; times carry a timezone).
+                  const a = document.createElement('a');
+                  a.href = exportUrl(f as 'csv' | 'png' | 'jpg' | 'pdf', locationId, chartKey, now - hours * 3600000, now + 48 * 3600000);
+                  a.download = `${locationId}_${chartKey}.${f}`;
+                  a.click();
                 }}
               >
                 <option value="">Export…</option>
@@ -145,11 +136,12 @@ export default function Home() {
         </div>
 
         <section className="kpis" aria-label="Latest values">
-          {DATASETS.map((ds) => {
+          {datasets.map((ds) => {
             const p = latestValid(getSeries(locationId, ds.key), now);
             const f = getFresh(locationId, ds.key);
-            const Icon = ICONS[ds.key];
-            const pct = p?.value != null ? Math.min(100, Math.max(4, (p.value / (ds.ramp[3] * 1.2)) * 100)) : 0;
+            const Icon = ICONS[ds.key] ?? Activity;
+            const top = ds.ramp[3] ?? 1;
+            const pct = p?.value != null ? Math.min(100, Math.max(4, (p.value / (top * 1.2)) * 100)) : 0;
             return (
               <div className="kpi" key={ds.key}>
                 <div className="kpi-head">
@@ -178,28 +170,28 @@ export default function Home() {
               <div className="card-head">
                 <h2 id="map-title"><span className="icon-badge"><MapPin size={18} aria-hidden /></span> Map room</h2>
                 <div className="tabs" role="tablist" aria-label="Map layer">
-                  {DATASETS.map((ds) => (
+                  {datasets.map((ds) => (
                     <button key={ds.key} role="tab" aria-selected={mapLayer === ds.key} className={mapLayer === ds.key ? 'tab on' : 'tab'} onClick={() => setMapLayer(ds.key)}>{ds.label}</button>
                   ))}
                 </div>
               </div>
-              <MapView ds={getDataset(mapLayer)} />
-              <MapLegend ds={getDataset(mapLayer)} />
+              <MapView ds={datasets.find((x) => x.key === mapLayer) ?? datasets[0]} />
+              <MapLegend ds={datasets.find((x) => x.key === mapLayer) ?? datasets[0]} />
               <p className="meta-line">
-                <KindBadge kind={getDataset(mapLayer).kind} /> Source: {getSource(getDataset(mapLayer).sourceId).name} · Latest at {loc.name}:{' '}
+                <KindBadge kind={(datasets.find((x) => x.key === mapLayer) ?? datasets[0]).kind} /> Source: {sourceName((datasets.find((x) => x.key === mapLayer) ?? datasets[0]).sourceId)} · Latest at {loc.name}:{' '}
                 {(() => { const s = getSeries(locationId, mapLayer); return s?.sourceTimestamp ? formatDateTime(s.sourceTimestamp) : 'no data'; })()}
               </p>
               <div className="chips" aria-label="Locations">
                 {(['coastal', 'waterway', 'offshore'] as const).map((z) => (
                   <span key={z} className="chip-group" role="group" aria-label={`${ZONE_LABEL[z]} locations`}>
                     <small className="muted">{ZONE_LABEL[z]}</small>
-                    {LOCATIONS.filter((l) => l.zone === z).map((l) => (
+                    {locations.filter((l) => l.zone === z).map((l) => (
                       <button key={l.id} className={l.id === locationId ? 'chip on' : 'chip'} onClick={() => setLocationId(l.id)} aria-pressed={l.id === locationId}>{l.name}</button>
                     ))}
                   </span>
                 ))}
               </div>
-              <p className="muted small">Select a marker or chip to update the chart. Only marked locations have data; the dashed box is the MVP coverage area.</p>
+              <p className="muted small">Select a marker or chip to update the chart. Only configured locations are shown.</p>
             </section>
 
             <section className="card glass-card" aria-labelledby="trend-title">
@@ -209,7 +201,7 @@ export default function Home() {
                   <p className="muted">{chartDs.description}</p>
                 </div>
                 <div className="tabs" role="tablist" aria-label="Indicator">
-                  {DATASETS.map((ds) => (
+                  {datasets.map((ds) => (
                     <button key={ds.key} role="tab" aria-selected={chartKey === ds.key} className={chartKey === ds.key ? 'tab on' : 'tab'} onClick={() => setChartKey(ds.key)}>{ds.label}</button>
                   ))}
                 </div>
@@ -223,7 +215,7 @@ export default function Home() {
                     decimals={chartDs.decimals}
                     now={now}
                     label={`${chartDs.label} at ${loc.name}`}
-                    threshold={rule ? { value: rule.threshold, label: `Advisory threshold ${rule.threshold} ${rule.unit} (illustrative)` } : undefined}
+                    threshold={rule ? { value: rule.threshold, label: `Advisory threshold ${rule.threshold} ${rule.unit}` } : undefined}
                     staleSince={chartFresh === 'stale' ? chartSeries?.sourceTimestamp : null}
                   />
                   <details className="table-alt">
@@ -246,7 +238,7 @@ export default function Home() {
               )}
 
               <p className="meta-line">
-                <KindBadge kind={chartDs.kind} /> <FreshBadge status={chartFresh} /> Source: {getSource(chartDs.sourceId).name} · Units: {chartDs.unit} · Times in WAT (UTC+1)
+                <KindBadge kind={chartDs.kind} /> <FreshBadge status={chartFresh} /> Source: {sourceName(chartDs.sourceId)} · Units: {chartDs.unit} · Times in WAT (UTC+1)
               </p>
             </section>
           </div>
@@ -279,10 +271,10 @@ export default function Home() {
                 <span className="pill">{obsStamp ? formatDateTime(obsStamp) : 'n/a'}</span>
               </div>
               <dl className="obs-list">
-                {DATASETS.map((ds) => {
+                {datasets.map((ds) => {
                   const p = latestValid(getSeries(locationId, ds.key), now);
                   const s = getSeries(locationId, ds.key);
-                  const Icon = ICONS[ds.key];
+                  const Icon = ICONS[ds.key] ?? Activity;
                   return (
                     <div className="obs-row" key={ds.key}>
                       <dt><Icon size={18} aria-hidden /> {ds.label}</dt>
@@ -295,7 +287,7 @@ export default function Home() {
                 })}
                 <div className="obs-row">
                   <dt><Gauge size={18} aria-hidden /> Source</dt>
-                  <dd><strong>{getSource('demo-sample').name}</strong><small>Synthetic sample data</small></dd>
+                  <dd><strong>{sourceFor(waveDs.sourceId)?.name ?? 'Configured source'}</strong><small>See source and timestamps above</small></dd>
                 </div>
                 <div className="obs-row">
                   <dt><Activity size={18} aria-hidden /> Data status</dt>
@@ -320,9 +312,9 @@ export default function Home() {
             <p>
               {wavePoint && windPoint ? (
                 <>
-                  At <strong>{loc.name}</strong>, the latest wave-height value is <strong>{wavePoint.value} m</strong>
+                  At <strong>{loc.name}</strong>, the latest {waveDs.label} value is <strong>{wavePoint.value} {waveDs.unit}</strong>
                   {wavePrev && wavePrev.value != null ? (wavePoint.value! > wavePrev.value ? `, up from ${wavePrev.value} m six hours earlier` : wavePoint.value! < wavePrev.value ? `, down from ${wavePrev.value} m six hours earlier` : ', unchanged from six hours earlier') : ''}
-                  {' '}(model estimate, {formatDateTime(wavePoint.t)}), and wind is <strong>{windPoint.value} km/h</strong> (observed, {formatDateTime(windPoint.t)}).
+                  {' '}({KIND_LABEL[wavePoint.kind].toLowerCase()}, {formatDateTime(wavePoint.t)}), and {datasets.find((dataset) => dataset.key === 'wind_speed')?.label ?? 'wind'} is <strong>{windPoint.value} {datasets.find((dataset) => dataset.key === 'wind_speed')?.unit ?? 'km/h'}</strong> ({KIND_LABEL[windPoint.kind].toLowerCase()}, {formatDateTime(windPoint.t)}).
                   {anyStale && ' Some feeds are stale, so treat these values with caution.'}
                 </>
               ) : (
@@ -337,3 +329,4 @@ export default function Home() {
     </>
   );
 }
+

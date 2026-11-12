@@ -6,7 +6,7 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
     return (
       <footer className="footer footer-compact">
         <p>
-          Orizon Nimasa is an informational tool, <strong>not</strong> an official forecast, warning or navigation aid. All values are synthetic sample data.
+          Orizon Nimasa is an informational tool, <strong>not</strong> an official forecast, warning or navigation aid. Values are shown with their source, timestamp and freshness.
           <span className="attrib" dangerouslySetInnerHTML={{ __html: ` Map: ${TILE_ATTRIBUTION}` }} />
         </p>
         <Link to="/about">About &amp; limits</Link>
@@ -35,8 +35,8 @@ export default function Footer({ compact = false }: { compact?: boolean }) {
           </ul>
         </div>
         <div>
-          <strong className="footer-title">Demo build</strong>
-          <p>All values are synthetic sample data for design review. No real measurements are shown.</p>
+          <strong className="footer-title">Data &amp; access</strong>
+          <p>Source, licence and attribution details are shown with every dataset.</p>
           <p className="attrib" dangerouslySetInnerHTML={{ __html: `Map: ${TILE_ATTRIBUTION}` }} />
           <p><Link to="/admin/login">Staff login</Link></p>
         </div>

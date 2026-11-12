@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { USE_API, sendFeedback } from '../api/client';
+import { sendFeedback } from '../api/client';
 
 const FOUND = { 'Yes, easily': 'yes_easily', 'Yes, with difficulty': 'yes_with_difficulty', No: 'no' } as const;
 const CLEAR = { 'Yes: source and time were clear': 'yes', Partly: 'partly', No: 'no' } as const;
@@ -15,7 +15,6 @@ export default function Feedback() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!USE_API) { setSent(true); return; }
     setBusy(true);
     setError(undefined);
     try {
@@ -35,7 +34,7 @@ export default function Feedback() {
   if (sent) {
     return (
       <div className="container section page narrow">
-        <div className="state"><CheckCircle2 aria-hidden /><strong>Thank you</strong><span>{USE_API ? 'Your feedback was sent. We read every response.' : 'Demo build: your answers stayed in this browser and were not transmitted.'}</span></div>
+        <div className="state"><CheckCircle2 aria-hidden /><strong>Thank you</strong><span>Your feedback was sent. We read every response.</span></div>
       </div>
     );
   }

@@ -1,12 +1,13 @@
 import { Link, NavLink } from 'react-router-dom';
-import { ArrowLeft, Bell, Database, LayoutGrid, Radio, Sparkles, X } from 'lucide-react';
+import { Anchor, ArrowLeft, Bell, Code2, Database, LayoutGrid, Radio, Sparkles, X } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { DATASETS } from '../config';
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid, end: true },
   { to: '/alerts', label: 'Alerts', icon: Bell, count: true },
   { to: '/sources', label: 'Data sources', icon: Database },
+  { to: '/marine', label: 'Marine layers', icon: Anchor },
+  { to: '/developer', label: 'Developer API', icon: Code2 },
   { to: '/insights', label: 'AI insights', icon: Sparkles },
 ];
 
@@ -15,9 +16,9 @@ export function BrandMark({ size = 36 }: { size?: number }) {
 }
 
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { activeEvents, staleKeys, status, locationId, getFresh } = useData();
-  const stale = staleKeys.length > 0 || DATASETS.some((d) => getFresh(locationId, d.key) === 'stale');
-  const empty = DATASETS.some((d) => getFresh(locationId, d.key) === 'empty');
+  const { activeEvents, staleKeys, status, locationId, getFresh, datasets } = useData();
+  const stale = staleKeys.length > 0 || datasets.some((d) => getFresh(locationId, d.key) === 'stale');
+  const empty = datasets.some((d) => getFresh(locationId, d.key) === 'empty');
   const down = status === 'error';
   const tone = down ? 'bad' : stale || empty ? 'warn' : 'ok';
   const linkText = down ? 'Data service unavailable' : empty ? 'No data received yet' : stale ? 'Some feeds are stale' : 'All feeds up to date';
@@ -63,3 +64,5 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
     </>
   );
 }
+
+

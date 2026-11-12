@@ -1,14 +1,13 @@
 import { Link } from 'react-router-dom';
 import { Bell, ChevronDown, Eye, MapPin, Menu, Navigation, Thermometer, Waves, Wind } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { DATASETS, LOCATIONS } from '../config';
 import { latestValid } from '../lib/freshness';
 import type { DatasetKey } from '../types';
 
 const ICONS: Record<DatasetKey, typeof Waves> = { wave_height: Waves, wind_speed: Wind, sst: Thermometer, visibility: Eye, current_speed: Navigation };
 
 export default function Topbar({ onMenu }: { onMenu: () => void }) {
-  const { activeEvents, locationId, setLocationId, getSeries, now } = useData();
+  const { activeEvents, locationId, setLocationId, getSeries, now, datasets, locations } = useData();
 
   return (
     <header className="topbar">
@@ -18,13 +17,13 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
         <MapPin size={20} aria-hidden />
         <label htmlFor="loc" className="sr-only">Choose a location</label>
         <select id="loc" value={locationId} onChange={(e) => setLocationId(e.target.value)}>
-          {LOCATIONS.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+          {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
         </select>
         <ChevronDown size={16} aria-hidden />
       </div>
 
       <div className="top-metrics">
-        {DATASETS.map((ds, i) => {
+        {datasets.map((ds, i) => {
           const p = latestValid(getSeries(locationId, ds.key), now);
           const Icon = ICONS[ds.key];
           return (
@@ -50,3 +49,4 @@ export default function Topbar({ onMenu }: { onMenu: () => void }) {
     </header>
   );
 }
+

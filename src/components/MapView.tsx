@@ -1,9 +1,10 @@
 import { CircleMarker, MapContainer, Rectangle, TileLayer, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { DatasetMeta } from '../types';
-import { COVERAGE_BOUNDS, LOCATIONS, MAP_CENTER, MAP_ZOOM, RAMP_COLOURS, TILE_ATTRIBUTION, TILE_URL, seriesKey } from '../config';
+import { RAMP_COLOURS, TILE_ATTRIBUTION, TILE_URL, seriesKey } from '../config';
 import { useData } from '../context/DataContext';
 import { latestValid } from '../lib/freshness';
+import { boundsOf } from '../lib/geo';
 
 export function rampColour(v: number, ds: DatasetMeta) {
   const i = ds.ramp.findIndex((t) => v < t);
@@ -11,6 +12,9 @@ export function rampColour(v: number, ds: DatasetMeta) {
 }
 
 export function MapLegend({ ds }: { ds: DatasetMeta }) {
+  if (!ds.ramp.length) {
+    return <ul className="legend" aria-label="Map legend"><li><i className="nodata" /> No current values to scale</li></ul>;
+  }
   const labels = [`< ${ds.ramp[0]}`, `${ds.ramp[0]}–${ds.ramp[1]}`, `${ds.ramp[1]}–${ds.ramp[2]}`, `${ds.ramp[2]}–${ds.ramp[3]}`, `≥ ${ds.ramp[3]}`];
   return (
     <ul className="legend" aria-label={`Legend for ${ds.label} in ${ds.unit}`}>
@@ -23,15 +27,20 @@ export function MapLegend({ ds }: { ds: DatasetMeta }) {
 }
 
 export default function MapView({ ds }: { ds: DatasetMeta }) {
-  const { bundle, now, locationId, setLocationId, getFresh } = useData();
+  const { bundle, now, locationId, setLocationId, getFresh, locations } = useData();
+  const bounds = boundsOf(locations);
+
+  if (!bounds) {
+    return <div className="state"><strong>No coverage locations</strong><span>The API returned no locations to plot.</span></div>;
+  }
 
   return (
-    <MapContainer center={MAP_CENTER} zoom={MAP_ZOOM} minZoom={8} maxZoom={13} scrollWheelZoom={false} className="map" aria-label="Map of the Lagos coastal coverage area">
+    <MapContainer bounds={bounds} boundsOptions={{ padding: [24, 24] }} minZoom={8} maxZoom={13} scrollWheelZoom={false} className="map" aria-label="Map of the configured coverage area">
       <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
-      <Rectangle bounds={COVERAGE_BOUNDS} pathOptions={{ color: '#0f6cbd', weight: 1.5, dashArray: '6 6', fillOpacity: 0.04 }}>
-        <Tooltip sticky>MVP coverage area. Only marked locations have data.</Tooltip>
+      <Rectangle bounds={bounds} pathOptions={{ color: '#0f6cbd', weight: 1.5, dashArray: '6 6', fillOpacity: 0.04 }}>
+        <Tooltip sticky>Configured coverage area. Only marked locations have data.</Tooltip>
       </Rectangle>
-      {LOCATIONS.map((l) => {
+      {locations.map((l) => {
         const s = bundle?.series[seriesKey(l.id, ds.key)];
         const p = latestValid(s, now);
         const fresh = getFresh(l.id, ds.key);

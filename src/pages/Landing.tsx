@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock, Eye, FileSearch, Layers, Navigation, Thermometer, Waves, Wind } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { DATASETS, SOURCES, getLocation } from '../config';
 import { latestValid } from '../lib/freshness';
 import { formatDateTime } from '../lib/time';
 import { FreshBadge, KindBadge } from '../components/Badges';
@@ -17,16 +16,16 @@ const PILLARS = [
 ];
 
 export default function Landing() {
-  const { bundle, now, locationId, getSeries, getFresh } = useData();
-  const loc = getLocation(locationId);
-  const candidates = SOURCES.filter((s) => s.status === 'candidate');
+  const { bundle, now, locationId, getSeries, getFresh, locations, sources, datasets } = useData();
+  const loc = locations.find((l) => l.id === locationId) ?? locations[0];
+  const candidates = sources.filter((s) => !s.enabled);
 
   return (
     <>
       <section className="land-hero">
         <div className="land-wrap hero-grid-land">
           <div className="hero-copy">
-            <span className="tag">Pilot · Lagos coast</span>
+            <span className="tag">Live data</span>
             <h1>
               Clear coastal conditions.<br />
               <span className="grad">Trusted, labelled data.</span>
@@ -45,15 +44,15 @@ export default function Landing() {
             <div className="card-head">
               <div>
                 <span className="label">Snapshot</span>
-                <h2>{loc.name}</h2>
+                <h2>{loc?.name ?? 'Selected location'}</h2>
               </div>
-              <span className="live"><span className="pulse" aria-hidden><i /><i /></span> Sample data</span>
+              <span className="live"><span className="pulse" aria-hidden><i /><i /></span> API data</span>
             </div>
             {bundle ? (
               <ul className="snap-list">
-                {DATASETS.map((ds) => {
+                {datasets.map((ds) => {
                   const p = latestValid(getSeries(locationId, ds.key), now);
-                  const Icon = ICONS[ds.key];
+                  const Icon = ICONS[ds.key] ?? Waves;
                   return (
                     <li key={ds.key}>
                       <span className="snap-name"><span className="icon-badge"><Icon size={18} aria-hidden /></span> {ds.label}</span>
@@ -66,7 +65,7 @@ export default function Landing() {
             ) : (
               <p className="muted">Loading latest values…</p>
             )}
-            <p className="muted small">Synthetic demonstration values{bundle ? `, generated ${formatDateTime(now)}` : ''}. Not real measurements.</p>
+            <p className="muted small">Latest values from configured sources{bundle ? `, updated ${formatDateTime(now)}` : ''}.</p>
             <Link to="/dashboard" className="inline-link">See the full dashboard →</Link>
           </div>
         </div>
@@ -92,8 +91,8 @@ export default function Landing() {
         <div className="land-wrap">
           <div className="land-head">
             <span className="label">Data sources</span>
-            <h2>Candidate sources under review</h2>
-            <p className="muted">None of these is connected yet. Each needs its licence, coverage and attribution confirmed before use.</p>
+            <h2>Sources under review</h2>
+            <p className="muted">Disabled or unapproved sources are listed with their current licence status. Each must be confirmed before operational use.</p>
           </div>
           <div className="src-strip">
             {candidates.map((s) => (
@@ -102,6 +101,7 @@ export default function Landing() {
                 <span className="muted">{s.provider}</span>
               </div>
             ))}
+            {!candidates.length && <p className="muted">No sources are currently under review.</p>}
             <Link to="/sources" className="src-chip src-link">View all sources &amp; licences <ArrowRight size={16} aria-hidden /></Link>
           </div>
         </div>
@@ -132,3 +132,5 @@ export default function Landing() {
     </>
   );
 }
+
+

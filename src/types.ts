@@ -1,6 +1,5 @@
 export type DataKind = 'observation' | 'forecast' | 'model_estimate' | 'derived';
 export type Freshness = 'fresh' | 'stale' | 'empty';
-export type FeedMode = 'normal' | 'stale' | 'error';
 export type DatasetKey = 'wave_height' | 'wind_speed' | 'sst' | 'visibility' | 'current_speed';
 export type Zone = 'coastal' | 'waterway' | 'offshore';
 
@@ -32,7 +31,7 @@ export interface SourceMeta {
   id: string;
   name: string;
   provider: string;
-  status: 'sample' | 'candidate';
+  enabled: boolean;
   licence: string;
   attribution: string;
   documentationUrl?: string;
@@ -71,7 +70,7 @@ export interface Bundle {
   generatedAt: number;
   series: Record<string, Series>;
   runs: IngestionRun[];
-  /** Alerts evaluated by the server. When absent the UI evaluates the rules locally (mock mode). */
+  /** Alerts evaluated by the server. */
   alerts?: AlertEvent[];
 }
 
@@ -113,3 +112,84 @@ export interface AlertEvent {
   status: AlertStatus;
   message: string;
 }
+
+export type VesselType = 'cargo' | 'tanker' | 'fishing' | 'patrol' | 'sailing' | string;
+
+export interface Vessel {
+  mmsi: string;
+  name: string;
+  flag: string;
+  vessel_type: VesselType;
+  call_sign?: string | null;
+  active: boolean;
+  lat?: number;
+  lng?: number;
+  sog?: number;
+  cog?: number;
+  observed_at?: string;
+  nav_status?: string;
+}
+
+export interface VesselTrackPoint {
+  mmsi: string;
+  observed_at: string;
+  lat: number;
+  lng: number;
+  sog: number;
+  cog: number;
+  heading?: number | null;
+  nav_status: string;
+  source: string;
+}
+
+export interface BathymetryPoint {
+  lat: number;
+  lng: number;
+  depth_m: number;
+  survey_name: string;
+  source: string;
+}
+
+export interface TidePoint { time: string; height_m: number; type: 'prediction'; source: string }
+export interface TideHighLow { time: string; height_m: number; type: 'high' | 'low' }
+export interface Tide {
+  location_id: string;
+  location: string;
+  datum: string;
+  source: string;
+  simulated: boolean;
+  points: TidePoint[];
+  high_low: TideHighLow[];
+}
+
+export interface QualitySummary {
+  generated_at: string;
+  locations: number;
+  datasets: number;
+  observations: number;
+  rejected_last_7d: number;
+  active_alerts: number;
+  stale_feeds: number;
+  empty_feeds: number;
+  gap_count_48h: number;
+  completeness_pct: number;
+  notes: string[];
+}
+
+export interface ApiKeyInfo {
+  id: number;
+  name: string;
+  prefix: string;
+  owner_email?: string | null;
+  environment: 'test' | 'production';
+  active: boolean;
+  scopes: string;
+  quota_per_day: number;
+  rate_limit_per_minute: number;
+  created_at: string;
+  last_used_at?: string | null;
+  revoked_at?: string | null;
+}
+
+export interface ApiKeyCreated extends ApiKeyInfo { key: string; warning: string }
+export interface ApiUsage { api_key_id: number; day: string; requests: number; quota: number; remaining: number; last_path?: string | null }

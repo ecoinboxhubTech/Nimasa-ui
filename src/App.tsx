@@ -11,6 +11,8 @@ import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
 import About from './pages/About';
 import Insights from './pages/Insights';
+import Marine from './pages/Marine';
+import Developer from './pages/Developer';
 import Feedback from './pages/Feedback';
 
 function ScrollTop() {
@@ -42,6 +44,8 @@ export default function App() {
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/sources" element={<Sources />} />
           <Route path="/insights" element={<Insights />} />
+          <Route path="/marine" element={<Marine />} />
+          <Route path="/developer" element={<Developer />} />
         </Route>
 
         {/* 3. Admin login */}
@@ -55,3 +59,4 @@ export default function App() {
     </>
   );
 }
+
